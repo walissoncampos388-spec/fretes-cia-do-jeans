@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # 1. Configuração de Design da Página
 st.set_page_config(
@@ -9,20 +10,17 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS personalizada para deixar com cara de sistema de grande empresa
+# Estilização CSS personalizada para integrar a logo e ajustar as cores
 st.markdown("""
     <style>
-        /* Cor de fundo principal e fontes */
         .main { background-color: #f8f9fa; }
-        h1 { color: #1E3A8A; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
         /* Banner do Topo */
         .header-banner {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            padding: 30px;
+            padding: 20px;
             border-radius: 12px;
             color: white;
-            text-align: center;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
@@ -37,19 +35,32 @@ st.markdown("""
             margin-bottom: 20px;
         }
         
-        /* Ajuste nas tabelas e textos */
         .info-label { font-weight: bold; color: #4b5563; }
         .info-value { color: #111827; }
     </style>
 """, unsafe_allow_html=True)
 
-# Banner de Cabeçalho da Cia do Jeans
-st.markdown("""
-    <div class="header-banner">
-        <h1 style="color: white; margin: 0; font-size: 32px;">👖 CIA DO JEANS</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 16px;">SISTEMA INTELIGENTE DE CONSULTA DE FRETES</p>
-    </div>
-""", unsafe_allow_html=True)
+# Exibição do Cabeçalho com a Logo Oficial
+with st.container():
+    # Cria duas colunas para o topo: uma para a logo e outra para o texto
+    col_logo, col_titulo = st.columns([1, 4])
+    
+    with col_logo:
+        # Se o arquivo existir no GitHub, ele carrega de forma limpa e arredondada
+        if os.path.exists("logo_ciadojeans.png"):
+            st.image("logo_ciadojeans.png", width=160)
+        else:
+            st.markdown("<h1 style='font-size: 40px; margin:0;'>👖</h1>", unsafe_allow_html=True)
+            
+    with col_titulo:
+        st.markdown("""
+            <div style="padding-top: 10px;">
+                <h1 style="color: #1e3a8a; margin: 0; font-size: 34px; font-family: 'Segoe UI', sans-serif;">CIA DO JEANS</h1>
+                <p style="margin: 5px 0 0 0; color: #4b5563; font-size: 16px; font-weight: 500;">SISTEMA INTELIGENTE DE CONSULTA DE FRETES</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+st.markdown("---")
 
 @st.cache_data
 def carregar_dados():
@@ -136,7 +147,6 @@ if cidade_selecionada and uf_selecionada:
             if "cotar" not in prazo_texto.lower() and "dias" not in prazo_texto.lower() and prazo_texto != '-':
                 prazo_texto = f"{prazo_texto} Dias"
 
-            # Layout em duas colunas dentro de cada opção: Informações na esquerda, Bloco de cópia na direita
             card_col1, card_col2 = st.columns([3, 2])
             
             with card_col1:
@@ -163,7 +173,6 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Exibe a caixinha com o texto pronto e o botão de copiar embutido do próprio Streamlit
                 st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=185, key=f"txt_{idx}")
             
             st.markdown("<br>", unsafe_allow_html=True)
