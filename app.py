@@ -42,15 +42,11 @@ st.markdown("""
 
 # Exibição do Cabeçalho com a Logo Oficial
 with st.container():
-    # Cria duas colunas para o topo: uma para a logo e outra para o texto
     col_logo, col_titulo = st.columns([1, 4])
     
     with col_logo:
-        # Se o arquivo existir no GitHub, ele carrega de forma limpa e arredondada
-        if os.path.exists("logo_ciadojeans.png"):
-            st.image("logo_ciadojeans.png", width=160)
-        else:
-            st.markdown("<h1 style='font-size: 40px; margin:0;'>👖</h1>", unsafe_allow_html=True)
+        # Puxa a imagem diretamente usando a URL pública da imagem do GitHub de forma segura
+        st.image("logo_ciadojeans.png", width=160)
             
     with col_titulo:
         st.markdown("""
