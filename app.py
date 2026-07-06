@@ -7,48 +7,71 @@ st.set_page_config(page_title="Consulta de Fretes - Cia do Jeans", page_icon="�
 st.title("🚚 Painel de Consulta de Fretes Automática")
 st.markdown("---")
 
-# Função para carregar e organizar o banco de dados (verticalizar as transportadoras)
 @st.cache_data
 def carregar_dados():
+    # Lê a planilha
     df = pd.read_excel("SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx", sheet_name='Plan1')
     
-    grupos = [
-        {'nome': 'TRANSPORTADORA', 'envio': 'ENVIO', 'fone': 'FONE', 'prazo': 'PRAZO', 'frete': 'FRETE', 'nf': 'NF', 'valor': 'VALOR MINIMO A PARTIR DE'},
-        {'nome': 'TRANPORTADORA 2', 'envio': 'ENVIO 2', 'fone': 'FONE 2', 'prazo': 'PRAZO 2', 'frete': 'FRETE 2 ', 'nf': 'NF 2', 'valor': 'VALOR MINIMO 2'},
-        {'nome': 'TRANSPORTADORA 3', 'envio': 'ENVIO 3', 'fone': 'FONE 3', 'prazo': 'PRAZO 3', 'frete': 'FRETE 3', 'nf': 'NF 3', 'valor': 'VALOR 3'},
-        {'nome': 'TRANSPORTADORA 4', 'envio': 'ENVIO 4', 'fone': 'FONE 4', 'prazo': 'PRAZO 4', 'frete': 'FRETE 4', 'nf': 'NF 4', 'valor': 'VALOR 4'},
-        {'nome': 'TRANSPORTADORA 5', 'envio': 'ENVIO 5', 'fone': 'FONE 5', 'prazo': 'PRAZO 5', 'frete': 'FRETE 5', 'nf': 'NF 5', 'valor': 'VALOR 5'},
-        {'nome': 'TRANSPORTADORA 6', 'envio': 'ENVIO 6', 'fone': 'FONE2', 'prazo': 'PRAZO 6', 'frete': 'FRETE 6', 'nf': 'NF 6', 'valor': 'VALOR 6'}
+    # Força a limpeza de qualquer espaço em branco invisível nos títulos das colunas
+    df.columns = [str(c).strip().upper() for c in df.columns]
+    
+    # Mapeamento dinâmico baseado em índices ou nomes limpos
+    pares_transportadoras = [
+        ('TRANSPORTADORA', 'ENVIO', 'FONE', 'PRAZO', 'FRETE', 'NF', 'VALOR MINIMO A PARTIR DE'),
+        ('TRANPORTADORA 2', 'ENVIO 2', 'FONE 2', 'PRAZO 2', 'FRETE 2', 'NF 2', 'VALOR MINIMO 2'),
+        ('TRANSPORTADORA 3', 'ENVIO 3', 'FONE 3', 'PRAZO 3', 'FRETE 3', 'NF 3', 'VALOR 3'),
+        ('TRANSPORTADORA 4', 'ENVIO 4', 'FONE 4', 'PRAZO 4', 'FRETE 4', 'NF 4', 'VALOR 4'),
+        ('TRANSPORTADORA 5', 'ENVIO 5', 'FONE 5', 'PRAZO 5', 'FRETE 5', 'NF 5', 'VALOR 5'),
+        ('TRANSPORTADORA 6', 'ENVIO 6', 'FONE2', 'PRAZO 6', 'FRETE 6', 'NF 6', 'VALOR 6'),
+        ('TRANSPORTADORA 7', 'ENVIO 7', 'FONE 7', 'PRAZO 7', 'FRETE 7', 'NF 7', 'VALOR MINIMO 7')
     ]
     
     linhas_normalizadas = []
+    
+    # Garante que as colunas essenciais de localização existem com nomes limpos
+    cidade_col = 'CIDADE' if 'CIDADE' in df.columns else df.columns[1]
+    uf_col = 'UF' if 'UF' in df.columns else df.columns[2]
+
     for _, r in df.iterrows():
-        cidade = str(r['CIDADE']).strip()
-        uf = str(r['UF']).strip()
-        for g in grupos:
-            if g['name'] in r and pd.notna(r[g['name']]):
-                t_name = str(r[g['name']]).strip()
-                if t_name and t_name != '0' and t_name.lower() != 'nan':
-                    linhas_normalizadas.append({
-                        'CIDADE': cidade,
-                        'UF': uf,
-                        'TRANSPORTADORA': t_name,
-                        'ROTA_ENVIO': str(r[g['envio']]).strip() if g['envio'] in r and pd.notna(r[g['envio']]) else '-',
-                        'FONE': str(r[g['fone']]).strip() if g['fone'] in r and pd.notna(r[g['fone']]) else '-',
-                        'PRAZO': str(r[g['prazo']]).strip() if g['prazo'] in r and pd.notna(r[g['prazo']]) else '-',
-                        'TIPO_FRETE': str(r[g['frete']]).strip() if g['frete'] in r and pd.notna(r[g['frete']]) else '-',
-                        'EXIGE_NF': str(r[g['nf']]).strip() if g['nf'] in r and pd.notna(r[g['nf']]) else '-',
-                        'VALOR_MINIMO': str(r[g['valor']]).strip() if g['valor'] in r and pd.notna(r[g['valor']]) else '-'
-                    })
+        cidade = str(r[cidade_col]).strip()
+        uf = str(r[uf_col]).strip()
+        
+        if cd := (cidade.lower() == 'nan' or not cidade):
+            continue
+            
+        # Percorre cada grupo de transportadora mapeado
+        for t_col, env_col, fon_col, prz_col, frt_col, nf_col, val_col in pares_transportadoras:
+            # Procura a coluna ignorando pequenos erros de digitação (espaços)
+            def obter_valor(nome_padrao):
+                for col_real in df.columns:
+                    if col_real.replace(" ", "") == nome_padrao.replace(" ", ""):
+                        val = r[col_real]
+                        return str(val).strip() if pd.notna(val) else '-'
+                return '-'
+
+            t_name = obter_valor(t_col)
+            if t_name and t_name != '-' and t_name != '0' and t_name.lower() != 'nan':
+                linhas_normalizadas.append({
+                    'CIDADE': cidade,
+                    'UF': uf,
+                    'TRANSPORTADORA': t_name,
+                    'ROTA_ENVIO': obter_valor(env_col),
+                    'FONE': obter_valor(fon_col),
+                    'PRAZO': obter_valor(prz_col),
+                    'TIPO_FRETE': obter_valor(frt_col),
+                    'EXIGE_NF': obter_valor(nf_col),
+                    'VALOR_MINIMO': obter_valor(val_col)
+                })
                 
     return pd.DataFrame(linhas_normalizadas)
 
 try:
     df_fretes = carregar_dados()
 except Exception as e:
-    st.error("Aguardando o upload do arquivo de dados 'SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx' neste repositório.")
+    st.error(f"Erro ao estruturar banco de dados: {e}")
     st.stop()
 
+# Criando os filtros de pesquisa na tela
 col1, col2 = st.columns(2)
 
 with col1:
@@ -62,22 +85,25 @@ with col2:
     else:
         uf_selecionada = st.selectbox("Selecione o Estado (UF):", [""])
 
+# Exibição dos dados organizados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
     if not resultados.empty:
         st.subheader(f"📍 Opções encontradas para {cidade_selecionada} - {uf_selecionada}")
         
-        for _, row in resultados.iterrows():
+        for idx, row in resultados.iterrows():
             with st.container():
                 st.markdown(f"### 🚚 {row['TRANSPORTADORA']}")
+                
+                # Monta dataframe organizado para exibição visual limpa
                 st.table(pd.DataFrame([{
                     "Rota/Envio": row['ROTA_ENVIO'],
                     "Contato": row['FONE'],
-                    "Prazo": f"{row['PRAZO']} Dias",
+                    "Prazo": f"{row['PRAZO']} Dias" if "cotar" not in str(row['PRAZO']).lower() else row['PRAZO'],
                     "Tipo de Frete": row['TIPO_FRETE'],
                     "Exige NF": row['EXIGE_NF'],
-                    "Valor Mínimo": f"R$ {row['VALOR_MINIMO']}"
+                    "Valor Mínimo": row['VALOR_MINIMO']
                 }]))
                 
                 texto_whatsapp = (
@@ -89,7 +115,7 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                st.text_area("📋 Texto Pronto para o WhatsApp:", value=texto_whatsapp, height=140, key=f"txt_{row['TRANSPORTADORA']}_{_}")
+                st.text_area("📋 Texto Pronto para o WhatsApp:", value=texto_whatsapp, height=140, key=f"txt_{idx}")
                 st.markdown("---")
     else:
         st.warning("Nenhuma transportadora encontrada para essa combinação.")
