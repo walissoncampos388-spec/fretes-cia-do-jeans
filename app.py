@@ -9,13 +9,9 @@ st.markdown("---")
 
 @st.cache_data
 def carregar_dados():
-    # Lê a planilha
     df = pd.read_excel("SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx", sheet_name='Plan1')
-    
-    # Força a limpeza de qualquer espaço em branco invisível nos títulos das colunas
     df.columns = [str(c).strip().upper() for c in df.columns]
     
-    # Mapeamento dinâmico baseado em índices ou nomes limpos
     pares_transportadoras = [
         ('TRANSPORTADORA', 'ENVIO', 'FONE', 'PRAZO', 'FRETE', 'NF', 'VALOR MINIMO A PARTIR DE'),
         ('TRANPORTADORA 2', 'ENVIO 2', 'FONE 2', 'PRAZO 2', 'FRETE 2', 'NF 2', 'VALOR MINIMO 2'),
@@ -27,8 +23,6 @@ def carregar_dados():
     ]
     
     linhas_normalizadas = []
-    
-    # Garante que as colunas essenciais de localização existem com nomes limpos
     cidade_col = 'CIDADE' if 'CIDADE' in df.columns else df.columns[1]
     uf_col = 'UF' if 'UF' in df.columns else df.columns[2]
 
@@ -36,12 +30,10 @@ def carregar_dados():
         cidade = str(r[cidade_col]).strip()
         uf = str(r[uf_col]).strip()
         
-        if cd := (cidade.lower() == 'nan' or not cidade):
+        if cidade.lower() == 'nan' or not cidade:
             continue
             
-        # Percorre cada grupo de transportadora mapeado
         for t_col, env_col, fon_col, prz_col, frt_col, nf_col, val_col in pares_transportadoras:
-            # Procura a coluna ignorando pequenos erros de digitação (espaços)
             def obter_valor(nome_padrao):
                 for col_real in df.columns:
                     if col_real.replace(" ", "") == nome_padrao.replace(" ", ""):
@@ -71,7 +63,6 @@ except Exception as e:
     st.error(f"Erro ao estruturar banco de dados: {e}")
     st.stop()
 
-# Criando os filtros de pesquisa na tela
 col1, col2 = st.columns(2)
 
 with col1:
@@ -85,7 +76,7 @@ with col2:
     else:
         uf_selecionada = st.selectbox("Selecione o Estado (UF):", [""])
 
-# Exibição dos dados organizados
+# Só roda se o usuário realmente selecionou uma cidade e um estado válidos
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
@@ -96,21 +87,19 @@ if cidade_selecionada and uf_selecionada:
             with st.container():
                 st.markdown(f"### 🚚 {row['TRANSPORTADORA']}")
                 
-                # Monta dataframe organizado para exibição visual limpa
-                st.table(pd.DataFrame([{
-                    "Rota/Envio": row['ROTA_ENVIO'],
-                    "Contato": row['FONE'],
-                    "Prazo": f"{row['PRAZO']} Dias" if "cotar" not in str(row['PRAZO']).lower() else row['PRAZO'],
-                    "Tipo de Frete": row['TIPO_FRETE'],
-                    "Exige NF": row['EXIGE_NF'],
-                    "Valor Mínimo": row['VALOR_MINIMO']
-                }]))
+                # Correção segura exibindo strings limpas
+                prazo_texto = str(row['PRAZO'])
+                if "cotar" not in prazo_texto.lower() and "dias" not in prazo_texto.lower() and prazo_texto != '-':
+                    prazo_texto = f"{prazo_texto} Dias"
+
+                # Cria visual em formato de tabela organizada para o usuário na tela
+                st.write(f"**Rota/Envio:** {row['ROTA_ENVIO']} | **Contato:** {row['FONE']} | **Prazo:** {prazo_texto} | **Tipo:** {row['TIPO_FRETE']} | **NF:** {row['EXIGE_NF']} | **Mínimo:** {row['VALOR_MINIMO']}")
                 
                 texto_whatsapp = (
                     f"*FRETE PARA {cidade_selecionada.upper()}-{uf_selecionada.upper()}*\n"
                     f"🚚 TRANSPORTADORA: {row['TRANSPORTADORA']}\n"
                     f"📍 ROTA/ENVIO: {row['ROTA_ENVIO']}\n"
-                    f"📆 PRAZO DE ENTREGA: {row['PRAZO']} DIAS\n"
+                    f"📆 PRAZO DE ENTREGA: {prazo_texto.upper()}\n"
                     f"📄 EXIGE NF: {row['EXIGE_NF']}\n"
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
