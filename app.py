@@ -1,11 +1,55 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração da página web
-st.set_page_config(page_title="Consulta de Fretes - Cia do Jeans", page_icon="🚚", layout="wide")
+# 1. Configuração de Design da Página
+st.set_page_config(
+    page_title="Cia do Jeans - Sistema de Fretes", 
+    page_icon="👖", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-st.title("🚚 Painel de Consulta de Fretes Automática")
-st.markdown("---")
+# Estilização CSS personalizada para deixar com cara de sistema de grande empresa
+st.markdown("""
+    <style>
+        /* Cor de fundo principal e fontes */
+        .main { background-color: #f8f9fa; }
+        h1 { color: #1E3A8A; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Banner do Topo */
+        .header-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 30px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        /* Cards das Transportadoras */
+        .transportadora-card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 6px solid #1e3a8a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        /* Ajuste nas tabelas e textos */
+        .info-label { font-weight: bold; color: #4b5563; }
+        .info-value { color: #111827; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Banner de Cabeçalho da Cia do Jeans
+st.markdown("""
+    <div class="header-banner">
+        <h1 style="color: white; margin: 0; font-size: 32px;">👖 CIA DO JEANS</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 16px;">SISTEMA INTELIGENTE DE CONSULTA DE FRETES</p>
+    </div>
+""", unsafe_allow_html=True)
 
 @st.cache_data
 def carregar_dados():
@@ -60,41 +104,56 @@ def carregar_dados():
 try:
     df_fretes = carregar_dados()
 except Exception as e:
-    st.error(f"Erro ao estruturar banco de dados: {e}")
+    st.error(f"Erro ao carregar banco de dados da Cia do Jeans: {e}")
     st.stop()
 
+# Área de Filtros organizada lado a lado com design clean
+st.markdown("### 🔍 O que você deseja buscar hoje?")
 col1, col2 = st.columns(2)
 
 with col1:
     lista_cidades = sorted(df_fretes['CIDADE'].unique())
-    cidade_selecionada = st.selectbox("Digite ou selecione a Cidade:", [""] + lista_cidades)
+    cidade_selecionada = st.selectbox("📍 Digite ou selecione a Cidade:", [""] + lista_cidades)
 
 with col2:
     if cidade_selecionada:
         estados_disponiveis = sorted(df_fretes[df_fretes['CIDADE'] == cidade_selecionada]['UF'].unique())
-        uf_selecionada = st.selectbox("Selecione o Estado (UF):", estados_disponiveis)
+        uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", estados_disponiveis)
     else:
-        uf_selecionada = st.selectbox("Selecione o Estado (UF):", [""])
+        uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", [""])
 
-# Só roda se o usuário realmente selecionou uma cidade e um estado válidos
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Apresentação Premium dos Resultados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
     if not resultados.empty:
-        st.subheader(f"📍 Opções encontradas para {cidade_selecionada} - {uf_selecionada}")
+        st.markdown(f"#### 📦 Encontramos {len(resultados)} opção(ões) de frete para **{cidade_selecionada.upper()} - {uf_selecionada.upper()}**:")
         
         for idx, row in resultados.iterrows():
-            with st.container():
-                st.markdown(f"### 🚚 {row['TRANSPORTADORA']}")
-                
-                # Correção segura exibindo strings limpas
-                prazo_texto = str(row['PRAZO'])
-                if "cotar" not in prazo_texto.lower() and "dias" not in prazo_texto.lower() and prazo_texto != '-':
-                    prazo_texto = f"{prazo_texto} Dias"
+            prazo_texto = str(row['PRAZO'])
+            if "cotar" not in prazo_texto.lower() and "dias" not in prazo_texto.lower() and prazo_texto != '-':
+                prazo_texto = f"{prazo_texto} Dias"
 
-                # Cria visual em formato de tabela organizada para o usuário na tela
-                st.write(f"**Rota/Envio:** {row['ROTA_ENVIO']} | **Contato:** {row['FONE']} | **Prazo:** {prazo_texto} | **Tipo:** {row['TIPO_FRETE']} | **NF:** {row['EXIGE_NF']} | **Mínimo:** {row['VALOR_MINIMO']}")
-                
+            # Layout em duas colunas dentro de cada opção: Informações na esquerda, Bloco de cópia na direita
+            card_col1, card_col2 = st.columns([3, 2])
+            
+            with card_col1:
+                st.markdown(f"""
+                <div class="transportadora-card">
+                    <h3 style="margin-top:0; color:#1e3a8a; font-size:22px;">🚚 {row['TRANSPORTADORA']}</h3>
+                    <hr style="margin: 10px 0; border: 0; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 6px 0;"><span class="info-label">📍 Rota / Envio:</span> <span class="info-value">{row['ROTA_ENVIO']}</span></p>
+                    <p style="margin: 6px 0;"><span class="info-label">📞 Contato:</span> <span class="info-value">{row['FONE']}</span></p>
+                    <p style="margin: 6px 0;"><span class="info-label">⏱️ Prazo de Entrega:</span> <span class="info-value">{prazo_texto}</span></p>
+                    <p style="margin: 6px 0;"><span class="info-label">📦 Tipo de Frete:</span> <span class="info-value">{row['TIPO_FRETE']}</span></p>
+                    <p style="margin: 6px 0;"><span class="info-label">📄 Exige NF:</span> <span class="info-value">{row['EXIGE_NF']}</span></p>
+                    <p style="margin: 6px 0;"><span class="info-label">💵 Valor Mínimo:</span> <span class="info-value">R$ {row['VALOR_MINIMO']}</span></p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with card_col2:
                 texto_whatsapp = (
                     f"*FRETE PARA {cidade_selecionada.upper()}-{uf_selecionada.upper()}*\n"
                     f"🚚 TRANSPORTADORA: {row['TRANSPORTADORA']}\n"
@@ -104,7 +163,9 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                st.text_area("📋 Texto Pronto para o WhatsApp:", value=texto_whatsapp, height=140, key=f"txt_{idx}")
-                st.markdown("---")
+                # Exibe a caixinha com o texto pronto e o botão de copiar embutido do próprio Streamlit
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=185, key=f"txt_{idx}")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
     else:
-        st.warning("Nenhuma transportadora encontrada para essa combinação.")
+        st.warning("Nenhuma transportadora cadastrada para esta cidade na base da Cia do Jeans.")
