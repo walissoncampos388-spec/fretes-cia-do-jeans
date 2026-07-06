@@ -41,24 +41,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Exibição do Cabeçalho com a Logo Oficial
-# Exibição do Cabeçalho com a Logo Oficial
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     
     with col_logo:
-        # Carrega a imagem local direto da pasta do projeto na nuvem
-        if os.path.exists("logo_ciadojeans.png"):
-            st.image("logo_ciadojeans.png", width=160)
-        else:
-            st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
-            
-    with col_titulo:
-        st.markdown("""
-            <div style="padding-top: 10px;">
-                <h1 style="color: #1e3a8a; margin: 0; font-size: 34px; font-family: 'Segoe UI', sans-serif;">CIA DO JEANS</h1>
-                <p style="margin: 5px 0 0 0; color: #4b5563; font-size: 16px; font-weight: 500;">SISTEMA INTELIGENTE DE CONSULTA DE FRETES</p>
-            </div>
-        """, unsafe_allow_html=True)
+        # Puxa a imagem diretamente usando a URL pública da imagem do GitHub de forma segura
+        st.image("logo_ciadojeans.png", width=160)
             
     with col_titulo:
         st.markdown("""
