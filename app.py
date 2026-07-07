@@ -10,41 +10,81 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS premium e limpa para os Cards
+# Estilização CSS Avançada - Toque Premium Cia do Jeans
 st.markdown("""
     <style>
+        /* Remove botões padrões desnecessários */
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
-        .main { background-color: #f8f9fa; }
+        
+        /* Cor de fundo do site */
+        .main { background-color: #f4f6f9; }
+        
+        /* Caixa de busca customizada */
+        div[data-baseweb="select"] {
+            border-radius: 8px !important;
+        }
+        
+        /* Cards das Transportadoras Refinados */
         .transportadora-card {
             background-color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 24px;
+            border-radius: 12px;
             border-left: 6px solid #1e3a8a;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
         }
-        .info-label { font-weight: bold; color: #4b5563; }
-        .info-value { color: #111827; }
+        
+        /* Título interno do card */
+        .card-titulo {
+            margin-top: 0; 
+            color: #1e3a8a; 
+            font-size: 22px; 
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 700;
+        }
+        
+        /* Linhas de informação internas */
+        .info-row {
+            margin: 8px 0;
+            font-size: 15px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .info-label { 
+            font-weight: 600; 
+            color: #4b5563; 
+        }
+        .info-value { 
+            color: #111827; 
+            font-weight: 500;
+        }
+        
+        /* Ajuste na área de texto do WhatsApp */
+        div[data-testid="stTextArea"] textarea {
+            border-radius: 8px !important;
+            border: 1px solid #ced4da !important;
+            background-color: #fafbfe !important;
+            font-family: 'Segoe UI', sans-serif !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho Fixo com a Imagem Oficial da Nuvem
+# Cabeçalho Limpo e Profissional
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-        st.image(url_logo, width=150, output_format="PNG")
+        st.image(url_logo, width=140, output_format="PNG")
             
     with col_titulo:
         st.markdown("""
-            <div style="padding-top: 5px;">
-                <h1 style="color: #1e3a8a; margin: 0; font-size: 32px; font-family: 'Segoe UI', sans-serif;">CIA DO JEANS</h1>
-                <p style="margin: 3px 0 0 0; color: #4b5563; font-size: 15px; font-weight: 500;">SISTEMA INTELIGENTE DE CONSULTA DE FRETES</p>
+            <div style="padding-top: 12px;">
+                <h1 style="color: #1e3a8a; margin: 0; font-size: 32px; font-family: 'Segoe UI', sans-serif; font-weight: 800; letter-spacing: 0.5px;">CIA DO JEANS</h1>
+                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Sistema Inteligente de Consulta de Fretes</p>
             </div>
         """, unsafe_allow_html=True)
 
-st.markdown("---")
+st.markdown("<hr style='margin: 15px 0 25px 0; border: 0; border-top: 1px solid #e5e7eb;'>", unsafe_allow_html=True)
 
 # CACHE ULTRA-RÁPIDO: Organização instantânea dos dados
 @st.cache_data(ttl=3600)
@@ -111,7 +151,7 @@ if df_fretes.empty:
     st.stop()
 
 # Filtros Rápidos na Tela
-st.markdown("### 🔍 O que você deseja buscar hoje?")
+st.markdown("<h3 style='color:#1e3a8a; font-family:sans-serif;'>🔍 O que você deseja buscar hoje?</h3>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 
 with col1:
@@ -125,31 +165,33 @@ with col2:
     else:
         uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", [""])
 
+st.markdown("<br>", unsafe_allow_html=True)
+
 # Apresentação dos Resultados Filtrados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
     if not resultados.empty:
-        st.markdown(f"#### 📦 Opções para **{cidade_selecionada} - {uf_selecionada}**:")
+        st.markdown(f"<p style='font-size:16px; font-weight:600; color:#4b5563;'>📦 Encontramos {len(resultados)} opção(ões) para <b>{cidade_selecionada} - {uf_selecionada}</b>:</p>", unsafe_allow_html=True)
         
         for idx, row in resultados.iterrows():
             prazo = str(row['PRAZO'])
             if "cotar" not in prazo.lower() and "dias" not in prazo.lower() and prazo != '-':
                 prazo = f"{prazo} Dias"
 
-            card_col1, card_col2 = st.columns([3, 2])
+            card_col1, card_col2 = st.columns([1.6, 1])
             
             with card_col1:
                 st.markdown(f"""
                 <div class="transportadora-card">
-                    <h3 style="margin-top:0; color:#1e3a8a; font-size:20px;">🚚 {row['TRANSPORTADORA']}</h3>
-                    <hr style="margin: 8px 0; border: 0; border-top: 1px solid #e5e7eb;">
-                    <p style="margin: 4px 0;"><span class="info-label">📍 Rota / Envio:</span> <span class="info-value">{row['ROTA_ENVIO']}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">📞 Contato:</span> <span class="info-value">{row['FONE']}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">⏱️ Prazo:</span> <span class="info-value">{prazo}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">📦 Frete:</span> <span class="info-value">{row['TIPO_FRETE']}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">📄 Exige NF:</span> <span class="info-value">{row['EXIGE_NF']}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">💵 Mínimo:</span> <span class="info-value">R$ {row['VALOR_MINIMO']}</span></p>
+                    <h3 class="card-titulo">🚚 {row['TRANSPORTADORA']}</h3>
+                    <hr style="margin: 12px 0; border: 0; border-top: 1px solid #f3f4f6;">
+                    <div class="info-row"><span class="info-label">📍 Rota / Envio:</span> <span class="info-value">{row['ROTA_ENVIO']}</span></div>
+                    <div class="info-row"><span class="info-label">📞 Contato:</span> <span class="info-value">{row['FONE']}</span></div>
+                    <div class="info-row"><span class="info-label">⏱️ Prazo:</span> <span class="info-value">{prazo}</span></div>
+                    <div class="info-row"><span class="info-label">📦 Frete:</span> <span class="info-value">{row['TIPO_FRETE']}</span></div>
+                    <div class="info-row"><span class="info-label">📄 Exige NF:</span> <span class="info-value">{row['EXIGE_NF']}</span></div>
+                    <div class="info-row"><span class="info-label">💵 Mínimo:</span> <span class="info-value">R$ {row['VALOR_MINIMO']}</span></div>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -163,12 +205,12 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Caixa de texto limpa
-                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
+                # Caixa de texto estilizada
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=175, key=f"wtxt_{idx}")
                 
-                # O BOTÃO AZUL SEGURO: Roda isolado num bloco HTML do Streamlit para nunca quebrar as colunas
+                # Botão Isolado de Cópia - Visual Clean e 100% Funcional
                 html_botao_copiar = f"""
-                <div style="width: 100%; text-align: center; margin-top: 5px;">
+                <div style="width: 100%; text-align: center; margin-top: -5px;">
                     <button id="btn_{idx}" onclick="
                         navigator.clipboard.writeText(`{texto_whatsapp}`).then(function() {{
                             var el = document.getElementById('btn_{idx}');
@@ -178,8 +220,6 @@ if cidade_selecionada and uf_selecionada:
                                 el.innerText = '📋 COPIAR TEXTO';
                                 el.style.backgroundColor = '#0066cc';
                             }}, 1500);
-                        }}).catch(function() {{
-                            alert('Erro ao copiar automaticamente. Use as folhas no topo da caixinha cinza.');
                         }});
                     " style="
                         width: 100%;
@@ -192,13 +232,14 @@ if cidade_selecionada and uf_selecionada:
                         border-radius: 8px;
                         cursor: pointer;
                         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        font-family: sans-serif;
+                        font-family: 'Segoe UI', sans-serif;
+                        letter-spacing: 0.5px;
                     ">
                         📋 COPIAR TEXTO
                     </button>
                 </div>
                 """
-                st.components.v1.html(html_botao_copiar, height=60)
+                st.components.v1.html(html_botao_copiar, height=55)
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
