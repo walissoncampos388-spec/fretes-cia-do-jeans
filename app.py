@@ -10,12 +10,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS premium e otimizada
+# Estilização CSS premium - Agora forçando o botão a ficar Azul Moderno
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
         .main { background-color: #f8f9fa; }
+        
+        /* Estilização dos Cards */
         .transportadora-card {
             background-color: white;
             padding: 20px;
@@ -26,23 +28,33 @@ st.markdown("""
         }
         .info-label { font-weight: bold; color: #4b5563; }
         .info-value { color: #111827; }
+
+        /* Customização Estrita do Botão para Azul Moderno da Cia do Jeans */
+        div.stButton > button {
+            background-color: #0066cc !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            border-radius: 8px !important;
+            width: 100% !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            transition: all 0.2s ease !important;
+        }
+        div.stButton > button:hover {
+            background-color: #0052a3 !important;
+            border: none !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho Fixo - Ajustado de forma limpa
+# Cabeçalho Fixo com a Imagem Oficial da Nuvem
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
-        # Puxa direto o link da imagem pública para garantir que carregue sem travar
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-        # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
-        try:
-            st.image("logo_ciadojeans.png", width=160)
-        except Exception:
-            try:
-                st.image("https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png", width=160)
-            except Exception:
-                st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
+        st.image(url_logo, width=150, output_format="PNG")
             
     with col_titulo:
         st.markdown("""
@@ -174,8 +186,8 @@ if cidade_selecionada and uf_selecionada:
                 # Caixa de texto padrão e limpa
                 st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
                 
-                # Botão Oficial Azul do Streamlit (Configurado com tipo primary para ficar azul moderno)
-                if st.button("📋 COPIAR TEXTO", key=f"btn_copiar_{idx}", use_container_width=True, type="primary"):
+                # Botão Injetado Oficial que agora assume a cor azul configurada no CSS acima
+                if st.button("📋 COPIAR TEXTO", key=f"btn_copiar_{idx}"):
                     st.html(f"<script>navigator.clipboard.writeText(`{texto_whatsapp}`);</script>")
                     st.toast("Texto copiado para o seu WhatsApp! 🚀")
                 
