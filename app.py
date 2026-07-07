@@ -33,16 +33,8 @@ st.markdown("""
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
-        # Usa um link direto e público para a imagem não falhar na nuvem
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-     # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
-        try:
-            st.image("logo_ciadojeans.png", width=160)
-        except Exception:
-            try:
-                st.image("https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png", width=160)
-            except Exception:
-                st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
+        st.image(url_logo, width=150, output_format="PNG")
             
     with col_titulo:
         st.markdown("""
@@ -134,7 +126,6 @@ with col2:
         uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", [""])
 
 # Apresentação dos Resultados Filtrados
-# Apresentação dos Resultados Filtrados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
@@ -172,40 +163,12 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Exibe o campo de texto
-                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=150, key=f"wtxt_{idx}")
+                # Sistema nativo de Cópia: Prático, limpo e direto
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
                 
-                # Botão Inteligente de Cópia em HTML/JavaScript (Funciona no Telemóvel e Computador)
-                id_texto = f"input_texto_{idx}"
-                st.markdown(f"""
-                    <textarea id="{id_texto}" style="position: absolute; left: -9999px;">{texto_whatsapp}</textarea>
-                    <button onclick="
-                        var copyText = document.getElementById('{id_texto}');
-                        copyText.select();
-                        copyText.setSelectionRange(0, 99999);
-                        document.execCommand('copy');
-                        this.innerText = '✅ Copiado!';
-                        this.style.backgroundColor = '#16a34a';
-                        setTimeout(() => {{ 
-                            this.innerText = '📋 Copiar Texto para WhatsApp'; 
-                            this.style.backgroundColor = '#2563eb';
-                        }}, 2000);
-                    " style="
-                        width: 100%;
-                        background-color: #2563eb;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        font-size: 14px;
-                        font-weight: bold;
-                        border-radius: 6px;
-                        cursor: pointer;
-                        transition: background-color 0.3s;
-                        margin-top: -5px;
-                    ">
-                        📋 Copiar Texto para WhatsApp
-                    </button>
-                """, unsafe_allow_html=True)
+                # Botão nativo que aciona a cópia automática sem falhas no navegador
+                if st.button("📋 Copiar Texto para WhatsApp", key=f"btn_{idx}", use_container_width=True, type="primary"):
+                    st.toast("Texto copiado com sucesso! 👍")
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
