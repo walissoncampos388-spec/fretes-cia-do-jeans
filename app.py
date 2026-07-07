@@ -74,7 +74,15 @@ with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-        st.image(url_logo, width=140, output_format="PNG")
+                # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
+        try:
+            st.image("logo_ciadojeans.png", width=160)
+        except Exception:
+            try:
+                st.image("https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png", width=160)
+            except Exception:
+                st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
+
             
     with col_titulo:
         st.markdown("""
