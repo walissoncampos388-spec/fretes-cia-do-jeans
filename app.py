@@ -35,7 +35,14 @@ with st.container():
     with col_logo:
         # Usa um link direto e público para a imagem não falhar na nuvem
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-        st.image(url_logo, width=150, output_format="PNG")
+     # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
+        try:
+            st.image("logo_ciadojeans.png", width=160)
+        except Exception:
+            try:
+                st.image("https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png", width=160)
+            except Exception:
+                st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
             
     with col_titulo:
         st.markdown("""
