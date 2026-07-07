@@ -170,12 +170,13 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Sistema nativo de Cópia: Prático, limpo e direto
-                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
-                
-                # Botão nativo que aciona a cópia automática sem falhas no navegador
-                if st.button("📋 Copiar Texto para WhatsApp", key=f"btn_{idx}", use_container_width=True, type="primary"):
-                    st.toast("Texto copiado com sucesso! 👍")
+                # Quadro de texto com botão de cópia nativo do Streamlit no canto direito
+                st.text_area(
+                    "📋 Clique no ícone de folhas (canto superior direito do quadro) para copiar:", 
+                    value=texto_whatsapp, 
+                    height=200, 
+                    key=f"wtxt_{idx}"
+                )
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
