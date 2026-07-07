@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from st_copy_to_clipboard import st_copy_to_clipboard
 
 # 1. Configuração de Design da Página
 st.set_page_config(
@@ -34,7 +35,7 @@ with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-       # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
+        # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
         try:
             st.image("logo_ciadojeans.png", width=160)
         except Exception:
@@ -170,13 +171,11 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Quadro de texto com botão de cópia nativo do Streamlit no canto direito
-                st.text_area(
-                    "📋 Clique no ícone de folhas (canto superior direito do quadro) para copiar:", 
-                    value=texto_whatsapp, 
-                    height=200, 
-                    key=f"wtxt_{idx}"
-                )
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=150, key=f"wtxt_{idx}")
+                
+                # Botão Dedicado de Cópia Real para a Área de Transferência
+                st.markdown("<p style='margin-bottom:2px; font-size:14px; font-weight:bold; color:#1e3a8a;'>👇 Clique abaixo para copiar:</p>", unsafe_allow_html=True)
+                st_copy_to_clipboard(texto_whatsapp, before_copy_label="📋 Copiar Texto", after_copy_label="✅ Copiado com Sucesso!")
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
