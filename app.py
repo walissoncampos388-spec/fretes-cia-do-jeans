@@ -156,8 +156,8 @@ if df_fretes.empty:
     st.error("Erro: Não foi possível carregar os dados da planilha. Verifique o arquivo Excel.")
     st.stop()
 
-# Filtros Rápidos na Tela
-st.markdown("<h3 style='color:#1e3a8a; font-family:sans-serif;'>🔍 O que você deseja buscar hoje?</h3>", unsafe_allow_html=True)
+# Filtros Rápidos na Tela - FRASE ATUALIZADA AQUI
+st.markdown("<h3 style='color:#1e3a8a; font-family:sans-serif;'>🔍 Para onde vamos enviar hoje?</h3>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 
 with col1:
