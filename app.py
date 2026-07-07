@@ -10,14 +10,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS premium - Agora forçando o botão a ficar Azul Moderno
+# Estilização CSS premium e limpa para os Cards
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
         .main { background-color: #f8f9fa; }
-        
-        /* Estilização dos Cards */
         .transportadora-card {
             background-color: white;
             padding: 20px;
@@ -28,24 +26,6 @@ st.markdown("""
         }
         .info-label { font-weight: bold; color: #4b5563; }
         .info-value { color: #111827; }
-
-        /* Customização Estrita do Botão para Azul Moderno da Cia do Jeans */
-        div.stButton > button {
-            background-color: #0066cc !important;
-            color: white !important;
-            border: none !important;
-            padding: 12px 20px !important;
-            font-size: 14px !important;
-            font-weight: bold !important;
-            border-radius: 8px !important;
-            width: 100% !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-            transition: all 0.2s ease !important;
-        }
-        div.stButton > button:hover {
-            background-color: #0052a3 !important;
-            border: none !important;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -183,13 +163,42 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Caixa de texto padrão e limpa
+                # Caixa de texto limpa
                 st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
                 
-                # Botão Injetado Oficial que agora assume a cor azul configurada no CSS acima
-                if st.button("📋 COPIAR TEXTO", key=f"btn_copiar_{idx}"):
-                    st.html(f"<script>navigator.clipboard.writeText(`{texto_whatsapp}`);</script>")
-                    st.toast("Texto copiado para o seu WhatsApp! 🚀")
+                # O BOTÃO AZUL SEGURO: Roda isolado num bloco HTML do Streamlit para nunca quebrar as colunas
+                html_botao_copiar = f"""
+                <div style="width: 100%; text-align: center; margin-top: 5px;">
+                    <button id="btn_{idx}" onclick="
+                        navigator.clipboard.writeText(`{texto_whatsapp}`).then(function() {{
+                            var el = document.getElementById('btn_{idx}');
+                            el.innerText = '✅ COPIADO!';
+                            el.style.backgroundColor = '#16a34a';
+                            setTimeout(function() {{
+                                el.innerText = '📋 COPIAR TEXTO';
+                                el.style.backgroundColor = '#0066cc';
+                            }}, 1500);
+                        }}).catch(function() {{
+                            alert('Erro ao copiar automaticamente. Use as folhas no topo da caixinha cinza.');
+                        }});
+                    " style="
+                        width: 100%;
+                        background-color: #0066cc;
+                        color: white;
+                        border: none;
+                        padding: 12px 20px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        font-family: sans-serif;
+                    ">
+                        📋 COPIAR TEXTO
+                    </button>
+                </div>
+                """
+                st.components.v1.html(html_botao_copiar, height=60)
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
