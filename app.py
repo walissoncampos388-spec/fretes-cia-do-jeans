@@ -69,17 +69,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho com a logo maior e centralizada
+# Cabeçalho TOTALMENTE CENTRALIZADO (Logo + Nome Oficial)
 with st.container():
     col_esq, col_centro, col_dir = st.columns([1, 2, 1])
     with col_centro:
+        # 1. Tenta carregar a imagem centralizada e maior
         try:
             st.image("logo_ciadojeans.png", use_container_width=True)
         except Exception:
             try:
                 st.image("https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png", width=240)
             except Exception:
-                st.markdown("<h1 style='text-align: center; margin:0;'>👖 CIA DO JEANS</h1>", unsafe_allow_html=True)
+                pass
+        
+        # 2. Exibe o Nome da Empresa e o Subtítulo Centralizados com elegância
+        st.markdown("""
+            <div style="text-align: center; margin-top: 15px;">
+                <h1 style="color: #1e3a8a; margin: 0; font-size: 34px; font-family: 'Segoe UI', sans-serif; font-weight: 800; letter-spacing: 0.5px;">CIA DO JEANS</h1>
+                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Sistema Inteligente de Consulta de Fretes</p>
+            </div>
+        """, unsafe_allow_html=True)
 
 st.markdown("<hr style='margin: 15px 0 25px 0; border: 0; border-top: 1px solid #e5e7eb;'>", unsafe_allow_html=True)
 
