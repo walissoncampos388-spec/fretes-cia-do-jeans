@@ -10,20 +10,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS otimizada
+# Estilização CSS premium e otimizada
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
         .main { background-color: #f8f9fa; }
-        .header-banner {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            padding: 20px;
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
         .transportadora-card {
             background-color: white;
             padding: 20px;
@@ -37,14 +29,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho Fixo
+# Cabeçalho Fixo com imagem apontada para link público seguro
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
-        if os.path.exists("logo_ciadojeans.png"):
-            st.image("logo_ciadojeans.png", width=150)
-        else:
-            st.markdown("<h2 style='margin:0;'>👖</h2>", unsafe_allow_html=True)
+        # Usa um link direto e público para a imagem não falhar na nuvem
+        url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
+        st.image(url_logo, width=150, output_format="PNG")
             
     with col_titulo:
         st.markdown("""
@@ -56,8 +47,8 @@ with st.container():
 
 st.markdown("---")
 
-# CACHE ULTRA-RÁPIDO: O segredo para a velocidade máxima
-@st.cache_data(ttl=3600) # Guarda os dados por 1 hora na memória sem precisar reler o Excel
+# CACHE ULTRA-RÁPIDO: Organização instantânea dos dados
+@st.cache_data(ttl=3600)
 def carregar_e_limpar_dados():
     try:
         df = pd.read_excel("SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx", sheet_name='Plan1')
@@ -66,7 +57,6 @@ def carregar_e_limpar_dados():
         
     df.columns = [str(c).strip().upper() for c in df.columns]
     
-    # Mapeamento estrito das colunas existentes
     pares = [
         ('TRANSPORTADORA', 'ENVIO', 'FONE', 'PRAZO', 'FRETE', 'NF', 'VALOR MINIMO A PARTIR DE'),
         ('TRANPORTADORA 2', 'ENVIO 2', 'FONE 2', 'PRAZO 2', 'FRETE 2', 'NF 2', 'VALOR MINIMO 2'),
@@ -92,7 +82,6 @@ def carregar_e_limpar_dados():
             continue
             
         for t_col, env_col, fon_col, prz_col, frt_col, nf_col, val_col in pares:
-            # Busca o valor real ignorando espaços
             def buscar(nome):
                 for c in df.columns:
                     if c.replace(" ", "") == nome.replace(" ", ""):
@@ -122,7 +111,7 @@ if df_fretes.empty:
     st.error("Erro: Não foi possível carregar os dados da planilha. Verifique o arquivo Excel.")
     st.stop()
 
-# Filtros rápidos
+# Filtros Rápidos na Tela
 st.markdown("### 🔍 O que você deseja buscar hoje?")
 col1, col2 = st.columns(2)
 
@@ -137,7 +126,7 @@ with col2:
     else:
         uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", [""])
 
-# Apresentação instantânea dos resultados
+# Apresentação dos Resultados Filtrados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
@@ -161,7 +150,7 @@ if cidade_selecionada and uf_selecionada:
                     <p style="margin: 4px 0;"><span class="info-label">⏱️ Prazo:</span> <span class="info-value">{prazo}</span></p>
                     <p style="margin: 4px 0;"><span class="info-label">📦 Frete:</span> <span class="info-value">{row['TIPO_FRETE']}</span></p>
                     <p style="margin: 4px 0;"><span class="info-label">📄 Exige NF:</span> <span class="info-value">{row['EXIGE_NF']}</span></p>
-                    <p style="margin: 4px 0;"><span class="info-label">💵 Minimo:</span> <span class="info-value">R$ {row['VALOR_MINIMO']}</span></p>
+                    <p style="margin: 4px 0;"><span class="info-label">💵 Mínimo:</span> <span class="info-value">R$ {row['VALOR_MINIMO']}</span></p>
                 </div>
                 """, unsafe_allow_html=True)
             
