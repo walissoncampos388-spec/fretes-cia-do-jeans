@@ -134,6 +134,7 @@ with col2:
         uf_selecionada = st.selectbox("🏳️ Selecione o Estado (UF):", [""])
 
 # Apresentação dos Resultados Filtrados
+# Apresentação dos Resultados Filtrados
 if cidade_selecionada and uf_selecionada:
     resultados = df_fretes[(df_fretes['CIDADE'] == cidade_selecionada) & (df_fretes['UF'] == uf_selecionada)]
     
@@ -170,4 +171,42 @@ if cidade_selecionada and uf_selecionada:
                     f"📄 EXIGE NF: {row['EXIGE_NF']}\n"
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
-                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=170, key=f"wtxt_{idx}")
+                
+                # Exibe o campo de texto
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=150, key=f"wtxt_{idx}")
+                
+                # Botão Inteligente de Cópia em HTML/JavaScript (Funciona no Telemóvel e Computador)
+                id_texto = f"input_texto_{idx}"
+                st.markdown(f"""
+                    <textarea id="{id_texto}" style="position: absolute; left: -9999px;">{texto_whatsapp}</textarea>
+                    <button onclick="
+                        var copyText = document.getElementById('{id_texto}');
+                        copyText.select();
+                        copyText.setSelectionRange(0, 99999);
+                        document.execCommand('copy');
+                        this.innerText = '✅ Copiado!';
+                        this.style.backgroundColor = '#16a34a';
+                        setTimeout(() => {{ 
+                            this.innerText = '📋 Copiar Texto para WhatsApp'; 
+                            this.style.backgroundColor = '#2563eb';
+                        }}, 2000);
+                    " style="
+                        width: 100%;
+                        background-color: #2563eb;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        transition: background-color 0.3s;
+                        margin-top: -5px;
+                    ">
+                        📋 Copiar Texto para WhatsApp
+                    </button>
+                """, unsafe_allow_html=True)
+                
+            st.markdown("<br>", unsafe_allow_html=True)
+    else:
+        st.warning("Nenhuma transportadora cadastrada para esta cidade na base da Cia do Jeans.")
