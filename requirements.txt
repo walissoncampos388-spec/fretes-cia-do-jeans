@@ -1,3 +1,4 @@
 streamlit
 pandas
 openpyxl
+st-copy-to-clipboard
