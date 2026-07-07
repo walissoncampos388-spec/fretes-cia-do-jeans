@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS premium e otimizada
+# Estilização CSS premium e otimizada (Volta ao padrão perfeito)
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
@@ -34,7 +34,7 @@ with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-        # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
+       # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
         try:
             st.image("logo_ciadojeans.png", width=160)
         except Exception:
@@ -170,47 +170,13 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=150, key=f"wtxt_{idx}")
+                # Caixa de Texto Bonita e Alinhada
+                st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
                 
-                # Sistema de Cópia Avançado e Moderno em HTML5 com Botão Azul Arredondado
-                id_textarea = f"txt_area_{idx}"
-                st.markdown(f"""
-                    <textarea id="{id_textarea}" style="position:fixed; top:-9999px; left:-9999px;">{texto_whatsapp}</textarea>
-                    <button id="btn_copiar_{idx}" onclick="
-                        var txt = document.getElementById('{id_textarea}');
-                        txt.select();
-                        txt.setSelectionRange(0, 99999);
-                        navigator.clipboard.writeText(txt.value).then(function() {{
-                            var el = document.getElementById('btn_copiar_{idx}');
-                            el.innerText = '✅ COPIADO!';
-                            el.style.backgroundColor = '#16a34a';
-                            setTimeout(function() {{
-                                el.innerText = '📋 COPIAR TEXTO';
-                                el.style.backgroundColor = '#0066cc';
-                            }}, 2000);
-                        }}).catch(function() {{
-                            document.execCommand('copy');
-                        }});
-                    " style="
-                        width: 100%;
-                        background-color: #0066cc;
-                        color: white;
-                        border: none;
-                        padding: 12px 20px;
-                        font-size: 14px;
-                        font-weight: bold;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        font-family: sans-serif;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        margin-top: 5px;
-                    " onmouseover="this.style.backgroundColor='#0052a3';" onmouseout="this.style.backgroundColor='#0066cc';">
-                        📋 COPIAR TEXTO
-                    </button>
-                """, unsafe_allow_html=True)
+                # Botão Oficial Azul Lindo do Streamlit (Sem quebrar o layout)
+                if st.button("📋 COPIAR TEXTO", key=f"btn_copiar_{idx}", use_container_width=True, type="primary"):
+                    st.html(f"<script>navigator.clipboard.writeText(`{texto_whatsapp}`);</script>")
+                    st.toast("Texto copiado para o seu WhatsApp! 🚀")
                 
             st.markdown("<br>", unsafe_allow_html=True)
     else:
