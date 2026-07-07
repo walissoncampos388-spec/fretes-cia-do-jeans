@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS premium e otimizada (Volta ao padrão perfeito)
+# Estilização CSS premium e otimizada
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
@@ -29,12 +29,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho Fixo com imagem apontada para link público seguro
+# Cabeçalho Fixo - Ajustado de forma limpa
 with st.container():
     col_logo, col_titulo = st.columns([1, 4])
     with col_logo:
+        # Puxa direto o link da imagem pública para garantir que carregue sem travar
         url_logo = "https://raw.githubusercontent.com/walissoncampos/fretes-cia-do-jeans/main/logo_ciadojeans.png"
-       # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
+        # Tenta carregar a imagem com segurança para nunca travar a tela das atendentes
         try:
             st.image("logo_ciadojeans.png", width=160)
         except Exception:
@@ -170,10 +171,10 @@ if cidade_selecionada and uf_selecionada:
                     f"💵 VALOR MÍNIMO R$: {row['VALOR_MINIMO']}"
                 )
                 
-                # Caixa de Texto Bonita e Alinhada
+                # Caixa de texto padrão e limpa
                 st.text_area("📋 Texto Pronto para WhatsApp", value=texto_whatsapp, height=160, key=f"wtxt_{idx}")
                 
-                # Botão Oficial Azul Lindo do Streamlit (Sem quebrar o layout)
+                # Botão Oficial Azul do Streamlit (Configurado com tipo primary para ficar azul moderno)
                 if st.button("📋 COPIAR TEXTO", key=f"btn_copiar_{idx}", use_container_width=True, type="primary"):
                     st.html(f"<script>navigator.clipboard.writeText(`{texto_whatsapp}`);</script>")
                     st.toast("Texto copiado para o seu WhatsApp! 🚀")
