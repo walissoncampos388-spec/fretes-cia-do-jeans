@@ -11,14 +11,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estilização CSS Premium para forçar o Banner a colar nas bordas laterais e do topo
+# Estilização CSS Premium e Responsiva
 st.markdown("""
     <style>
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
         .main { background-color: #f4f6f9; }
         
-        /* Remove completamente os espaços e margens do Streamlit no topo e laterais para o Banner */
+        /* Remove espaços do topo e laterais para o Banner */
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 2rem !important;
@@ -26,7 +26,7 @@ st.markdown("""
             padding-right: 0rem !important;
         }
         
-        /* Garante que o conteúdo abaixo do banner tenha margem nas laterais para não grudar na tela */
+        /* Margens do conteúdo abaixo do banner */
         .conteudo-pagina {
             padding-left: 2rem !important;
             padding-right: 2rem !important;
@@ -66,18 +66,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# CACHE ULTRA-RÁPIDO: Organização inteligente e limpa da nova planilha
+# TRANSFORMAÇÃO AUTOMÁTICA EM LISTA LINEAR ORGANIZADA
 @st.cache_data(ttl=3600)
-def carregar_e_limpar_dados():
+def carregar_e_organizar_dados():
     try:
+        # Tenta carregar o arquivo atualizado
         df = pd.read_excel("SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx", sheet_name='Plan1')
     except Exception:
-        return pd.DataFrame()
+        try:
+            # Segunda tentativa caso o nome esteja diferente temporariamente
+            df = pd.read_excel("SISTEMA_DE_FRETES_PERFEITO (1).xlsx", sheet_name='Plan1')
+        except Exception:
+            return pd.DataFrame()
         
-    # Limpa cabeçalhos removendo espaços duplos invisíveis que vieram na nova planilha
+    # Padroniza os nomes das colunas removendo espaços extras
     df.columns = [" ".join(str(c).split()).strip().upper() for c in df.columns]
     
-    # Mapeamento exato corrigindo os nomes com ou sem "S" da sua planilha nova
+    # Pares horizontais de transportadoras presentes na sua planilha
     pares = [
         ('TRANSPORTADORA', 'ENVIO', 'FONE', 'PRAZO', 'FRETE', 'NF', 'VALOR MINIMO A PARTIR DE'),
         ('TRANPORTADORA 2', 'ENVIO 2', 'FONE 2', 'PRAZO 2', 'FRETE 2', 'NF 2', 'VALOR MINIMO 2'),
@@ -94,34 +99,43 @@ def carregar_e_limpar_dados():
     if not cidade_col or not uf_col:
         return pd.DataFrame()
         
-    linhas = []
+    linhas_organizadas = []
+    
+    # Passa linha por linha varrendo e transformando em formato de lista vertical limpa
     for _, r in df.iterrows():
         cidade = str(r[cidade_col]).strip().upper()
         uf = str(r[uf_col]).strip().upper()
+        
         if not cidade or cidade in ['NAN', '-', ''] or uf in ['NAN', '-', '']:
             continue
             
         for t_col, env_col, fon_col, prz_col, frt_col, nf_col, val_col in pares:
-            def buscar(nome):
-                # Busca flexível ignorando espaços extras entre as palavras
-                nome_limpo = "".join(nome.split())
+            def buscar_valor(nome_coluna):
+                nome_limpo = "".join(nome_coluna.split())
                 for c in df.columns:
                     if "".join(c.split()) == nome_limpo:
                         val = r[c]
                         return str(val).strip() if pd.notna(val) else '-'
                 return '-'
                 
-            t_name = buscar(t_col)
-            if t_name and t_name not in ['-', '0', 'NAN', '']:
-                linhas.append({
-                    'CIDADE': cidade, 'UF': uf, 'TRANSPORTADORA': t_name,
-                    'ROTA_ENVIO': buscar(env_col), 'FONE': buscar(fon_col),
-                    'PRAZO': buscar(prz_col), 'TIPO_FRETE': buscar(frt_col),
-                    'EXIGE_NF': buscar(nf_col), 'VALOR_MINIMO': buscar(val_col)
+            nome_transp = buscar_valor(t_col)
+            # Só adiciona na lista final se a coluna da transportadora tiver conteúdo válido
+            if nome_transp and nome_transp not in ['-', '0', 'NAN', '']:
+                linhas_organizadas.append({
+                    'CIDADE': cidade, 
+                    'UF': uf, 
+                    'TRANSPORTADORA': nome_transp,
+                    'ROTA_ENVIO': buscar_valor(env_col), 
+                    'FONE': buscar_valor(fon_col),
+                    'PRAZO': buscar_valor(prz_col), 
+                    'TIPO_FRETE': buscar_valor(frt_col),
+                    'EXIGE_NF': buscar_valor(nf_col), 
+                    'VALOR_MINIMO': buscar_valor(val_col)
                 })
-    return pd.DataFrame(linhas)
+                
+    return pd.DataFrame(linhas_organizadas)
 
-df_fretes_fixos = carregar_e_limpar_dados()
+df_fretes_fixos = carregar_e_organizar_dados()
 
 # ==========================================
 # BANNER RETANGULAR PONTA A PONTA
@@ -134,9 +148,7 @@ except Exception:
     st.error("⚠️ Não foi possível carregar a imagem do banner. Verifique o arquivo no GitHub.")
 
 
-# ==========================================
-# ENCAPSULAMENTO DO CONTEÚDO (MARGENS PRESERVADAS)
-# ==========================================
+# Enquadramento do Conteúdo
 st.markdown('<div class="conteudo-pagina">', unsafe_allow_html=True)
 
 # PASSO 1: LOCALIZAÇÃO DO CLIENTE
@@ -231,7 +243,7 @@ if btn_calcular:
         opcoes_whatsapp = []
         
         if df_fretes_fixos.empty:
-            st.warning("⚠️ Planilha 'SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx' não encontrada.")
+            st.warning("⚠️ Planilha de dados de frete não encontrada no repositório.")
         else:
             resultados_fixos = df_fretes_fixos[(df_fretes_fixos['CIDADE'] == cidade_busca) & (df_fretes_fixos['UF'] == uf_busca)]
             
@@ -244,7 +256,7 @@ if btn_calcular:
                     st.markdown(f"""
                     <div class="card-frete" style="border-left: 5px solid #1e3a8a;">
                         <div>
-                            <strong style="font-size:16px; color:#1e3a8a;"><b> Merino 🚛 {row['TRANSPORTADORA']}</b></strong><br>
+                            <strong style="font-size:16px; color:#1e3a8a;"><b>🚛 {row['TRANSPORTADORA']}</b></strong><br>
                             <span style="font-size:13px; color:#4b5563;">📍 Rota: {row['ROTA_ENVIO']} | 📞 Fone: {row['FONE']}</span><br>
                             <span style="font-size:12px; color:#6b7280;">⏱️ Prazo: {print_prazo} | 📄 Exige NF: {row['EXIGE_NF']}</span>
                         </div>
@@ -294,4 +306,4 @@ if btn_calcular:
             """, unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True) # Fecha a div conteudo-pagina
+st.markdown('</div>', unsafe_allow_html=True)
