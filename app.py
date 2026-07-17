@@ -249,15 +249,32 @@ if st.session_state.tela_ativa == "cotacao":
         qtd_calcas = st.number_input("Quantidade de Calças:", min_value=0, value=0, step=1, key="calc_un")
         qtd_bermudas = st.number_input("Quantidade de Bermudas:", min_value=0, value=0, step=1, key="berm_un")
         qtd_shorts = st.number_input("Quantidade de Shorts:", min_value=0, value=0, step=1, key="shor_un")
+        qtd_camisas = st.number_input("Quantidade de Camisas:", min_value=0, value=0, step=1, key="cam_un")
+        qtd_saias = st.number_input("Quantidade de Saias:", min_value=0, value=0, step=1, key="saia_un")
+        # Campo Croppeds movido para debaixo de saias
+        qtd_croppeds = st.number_input("Quantidade de Croppeds:", min_value=0, value=0, step=1, key="crop_un")
+        
     with c2:
         qtd_gola_o = st.number_input("Quantidade de Gola O:", min_value=0, value=0, step=1, key="gola_un")
         qtd_tshirt = st.number_input("Quantidade de T-Shirt:", min_value=0, value=0, step=1, key="tsh_un")
         qtd_polo = st.number_input("Quantidade de Gola Polo:", min_value=0, value=0, step=1, key="polo_un")
+        qtd_vestidos = st.number_input("Quantidade de Vestidos:", min_value=0, value=0, step=1, key="vest_un")
+        qtd_conjuntos = st.number_input("Quantidade de Conjuntos:", min_value=0, value=0, step=1, key="conj_un")
+        qtd_bones = st.number_input("Quantidade de Bonés:", min_value=0, value=0, step=1, key="bone_un")
 
-    # Matemática de Pesos e Embalagem
-    peso_pecas_puro = (qtd_calcas * 0.60) + (qtd_bermudas * 0.40) + (qtd_shorts * 0.35) + (qtd_gola_o * 0.28) + (qtd_tshirt * 0.20) + (qtd_polo * 0.32)
+    # Matemática de Pesos e Embalagem (Vestido=0.55kg, Conjunto=0.50kg, Camisa=0.25kg, Saia=0.30kg, Cropped=0.15kg, Boné=0.10kg)
+    peso_pecas_puro = (
+        (qtd_calcas * 0.60) + (qtd_bermudas * 0.40) + (qtd_shorts * 0.35) + 
+        (qtd_gola_o * 0.28) + (qtd_tshirt * 0.20) + (qtd_polo * 0.32) +
+        (qtd_vestidos * 0.55) + (qtd_conjuntos * 0.50) + (qtd_bones * 0.10) +
+        (qtd_camisas * 0.25) + (qtd_saias * 0.30) + (qtd_croppeds * 0.15)
+    )
     peso_total_calculado = peso_pecas_puro + (0.4 if peso_pecas_puro > 0 else 0)
-    total_pecas = qtd_calcas + qtd_bermudas + qtd_shorts + qtd_gola_o + qtd_tshirt + qtd_polo
+    total_pecas = (
+        qtd_calcas + qtd_bermudas + qtd_shorts + qtd_gola_o + qtd_tshirt + 
+        qtd_polo + qtd_vestidos + qtd_conjuntos + qtd_bones + qtd_camisas + 
+        qtd_saias + qtd_croppeds
+    )
 
     with c3:
         valor_manual_nf_txt = st.text_input("✍️ Valor Real da NF (Opcional):", placeholder="Ex: 1250,00", key="nf_manual_txt").strip()
@@ -276,7 +293,7 @@ if st.session_state.tela_ativa == "cotacao":
             key="box_regra_divisao_fardo"
         )
         
-        # --- CORREÇÃO: DIVISÃO DINÂMICA DE VOLUMES (N: VOLUMES) ---
+        # Divisão dinâmica de volumes
         num_volumes = 1
         if total_pecas > 0:
             if meio_envio_selecionado == "Padrão (Dividir acima de 50 kg)" and peso_total_calculado > 50.0:
@@ -324,7 +341,12 @@ if st.session_state.tela_ativa == "cotacao":
             visual_largura = larg
             orientacao_texto = "Fardo Deitado"
 
-        valor_nf_meia = (qtd_calcas * 40) + (qtd_bermudas * 33) + (qtd_shorts * 33) + (qtd_gola_o * 18) + (qtd_tshirt * 19) + (qtd_polo * 25)
+        valor_nf_meia = (
+            (qtd_calcas * 40) + (qtd_bermudas * 33) + (qtd_shorts * 33) + 
+            (qtd_gola_o * 18) + (qtd_tshirt * 19) + (qtd_polo * 25) +
+            (qtd_vestidos * 45) + (qtd_conjuntos * 50) + (qtd_bones * 15) +
+            (qtd_camisas * 30) + (qtd_saias * 35) + (qtd_croppeds * 20)
+        )
         valor_para_seguro = valor_manual_nf if valor_manual_nf > 0 else valor_nf_meia
         
         txt_volumes_resumo = f" ({num_volumes} Vol. de {peso_por_volume:.2f} kg)" if num_volumes > 1 else ""
@@ -627,6 +649,6 @@ elif st.session_state.tela_ativa == "rastreio":
                 height=620
             )
     else:
-        st.info("✍️ Digite o código de rastreio acima para gerar o link de envio imediatamente.")
+        st.info("✍️ Digite o código de rastreio acima para generalize o link de envio imediatamente.")
 
     st.markdown('</div>', unsafe_allow_html=True)
