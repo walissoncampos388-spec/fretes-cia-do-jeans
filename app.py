@@ -450,7 +450,7 @@ if st.session_state.tela_ativa == "cotacao":
                         for idx, row in resultados_fixos.iterrows():
                             print_prazo = str(row['PRAZO'])
                             if "cotar" not in print_prazo.lower() and "dias" not in print_prazo.lower() and print_prazo != '-': 
-                                print_prazo = f"{print_prazo} Days"
+                                print_prazo = f"{print_prazo} Dias"
                                 
                             st.markdown(f"""
                             <div class="card-frete" style="border-left: 5px solid #1e3a8a;">
@@ -466,7 +466,7 @@ if st.session_state.tela_ativa == "cotacao":
                     for idx, row in resultados_fixos.iterrows():
                         print_prazo = str(row['PRAZO'])
                         if "cotar" not in print_prazo.lower() and "dias" not in print_prazo.lower() and print_prazo != '-': 
-                            print_prazo = f"{print_prazo} Days"
+                            print_prazo = f"{print_prazo} Dias"
                         opcoes_whatsapp.append(
                             f"🚛 *{row['TRANSPORTADORA']}*\n"
                             f"💰 Mínimo: R$ {row['VALOR_MINIMO']}\n"
@@ -528,7 +528,11 @@ elif st.session_state.tela_ativa == "rastreio":
     st.markdown('<div class="bloco-etapa" style="border-top: 4px solid #1e3a8a;">', unsafe_allow_html=True)
     st.markdown('<div class="titulo-etapa">📦 PASSO ÚNICO: Gerar Rastreio para o Cliente</div>', unsafe_allow_html=True)
 
-    col_transp, col_cod, col_doc = st.columns([1.5, 1.5, 1])
+    # Reajustado layout de colunas para adicionar o campo do Nome do Cliente mantendo proporção limpa
+    col_nome_cli, col_transp, col_cod, col_doc = st.columns([1.2, 1.2, 1.2, 1])
+
+    with col_nome_cli:
+        nome_cliente_rastreio = st.text_input("Nome do Cliente:", placeholder="Ex: Maria Silva", key="campo_nome_cliente_estavel").strip()
 
     with col_transp:
         transportadora_rastreio = st.selectbox(
@@ -556,10 +560,13 @@ elif st.session_state.tela_ativa == "rastreio":
         link_rastreio_final = ""
         mensagem_rastreio = ""
         
+        # Define saudação inicial com base na presença do nome do cliente
+        txt_saudacao = f"Olá, *{nome_cliente_rastreio}*!" if nome_cliente_rastreio else "Olá!"
+        
         if transportadora_rastreio == "Correios":
             link_rastreio_final = f"https://rastreamento.correios.com.br/app/index.php?objetos={codigo_rastreio}"
             mensagem_rastreio = (
-                f"Olá! Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
                 f"🚚 *Transportadora:* Correios\n"
                 f"📦 *Código de Rastreio:* `{codigo_rastreio}`\n\n"
                 f"🔗 *Clique no link abaixo para acompanhar seu envio:*\n"
@@ -569,7 +576,7 @@ elif st.session_state.tela_ativa == "rastreio":
         elif transportadora_rastreio == "Jadlog":
             link_rastreio_final = f"https://www.jadlog.com.br/siteInstitucional/tracking.jad?conteudo={codigo_rastreio}"
             mensagem_rastreio = (
-                f"Olá! Seu pedido da *Cia do Jeans* já está a caminho! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já está a caminho! 🎉\n\n"
                 f"🚚 *Transportadora:* Jadlog\n"
                 f"📦 *Código de Rastreio:* `{codigo_rastreio}`\n\n"
                 f"🔗 *Clique no link abaixo para acompanhar seu envio:*\n"
@@ -579,7 +586,7 @@ elif st.session_state.tela_ativa == "rastreio":
         elif transportadora_rastreio == "J&T Express":
             link_rastreio_final = "https://www.jtexpress.com.br/trajectoryQuery"
             mensagem_rastreio = (
-                f"Olá! Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
                 f"🚚 *Transportadora:* J&T Express\n"
                 f"📦 *Código de Rastreio:* `{codigo_rastreio}`\n\n"
                 f"🔗 *Como rastrear:*\n"
@@ -591,7 +598,7 @@ elif st.session_state.tela_ativa == "rastreio":
             link_rastreio_final = "https://www.braspress.com.br/"
             doc_info = f" (CNPJ/CPF: {doc_cliente})" if doc_cliente else ""
             mensagem_rastreio = (
-                f"Olá! Seu pedido da *Cia do Jeans* já foi coletado! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* ya foi coletado! 🎉\n\n"
                 f"🚚 *Transportadora:* Braspress\n"
                 f"📄 *Número da Nota Fiscal:* `{codigo_rastreio}`{doc_info}\n\n"
                 f"🔗 *Como rastrear:*\n"
@@ -603,7 +610,7 @@ elif st.session_state.tela_ativa == "rastreio":
         elif transportadora_rastreio == "Azul Cargo":
             link_rastreio_final = f"https://www.azullogistica.com.br/Rastreio/Rastrear?awb={codigo_rastreio}"
             mensagem_rastreio = (
-                f"Olá! Seu pedido da *Cia do Jeans* já está voando até você! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já está voando até você! 🎉\n\n"
                 f"🚚 *Transportadora:* Azul Cargo Express\n"
                 f"📦 *Código de Rastreio (AWB):* `{codigo_rastreio}`\n\n"
                 f"🔗 *Clique no link abaixo para acompanhar seu envio:*\n"
