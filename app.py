@@ -656,6 +656,6 @@ elif st.session_state.tela_ativa == "rastreio":
                 height=620
             )
     else:
-        st.info("✍️ Digite o código de rastreio acima para generalize o link de envio imediatamente.")
+        st.info("✍️ Digite o código de rastreio acima para gerar o link de envio imediatamente.")
 
     st.markdown('</div>', unsafe_allow_html=True)
