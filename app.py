@@ -1,8 +1,14 @@
 import base64
+import math
 import urllib.parse
 import pandas as pd
 import requests
 import streamlit as st
+
+# Configurações do Token e CEPs de Origem
+FRENET_TOKEN = "96BCC656R0FA4R4CBERBCE2R86EF8956C1BA"
+FRENET_CEP_JARAGUA = "76320464"  # CEP de Origem Jaraguá - GO
+FRENET_CEP_GOIANIA = "74000000"  # CEP de Origem Goiânia - GO (Para Jadlog)
 
 # 1. Configuração de Design da Página
 st.set_page_config(
@@ -23,13 +29,233 @@ if "rastreio_gerado" not in st.session_state:
     st.session_state["rastreio_gerado"] = False
 
 
-# Funções de clique rápido para limpar o delay do double-click
+# FUNÇÃO PARA LIMPAR O TEXTO DO WHATSAPP AO CLICAR EM CALCULAR
+def resetar_texto_whatsapp():
+    if "txt_area_print" in st.session_state:
+        del st.session_state["txt_area_print"]
+
+
+# Funções de clique rápido para trocar de tela
 def mudar_para_cotacao():
     st.session_state.tela_ativa = "cotacao"
 
 
 def mudar_para_rastreio():
     st.session_state.tela_ativa = "rastreio"
+
+
+# Função de cotação via API da Frenet
+def cotar_frenet(
+    cep_destino, peso, comp, larg, alt, valor_declarado, num_volumes=1
+):
+    if not FRENET_TOKEN or FRENET_TOKEN == "SEU_TOKEN_FRENET_AQUI":
+        return [], "Token não configurado"
+
+    url = "https://api.frenet.com.br/shipping/quote"
+    headers = {
+        "Content-Type": "application/json",
+        "token": FRENET_TOKEN,
+    }
+
+    # Divisão proporcional por volume (Peso e Valor Declarado)
+    peso_envio = max(float(peso) / float(num_volumes), 0.3)
+    valor_declarado_envio = (
+        float(valor_declarado) / float(num_volumes)
+        if valor_declarado > 0
+        else 100.0
+    )
+
+    comp_envio = max(int(comp), 16)
+    larg_envio = max(int(larg), 11)
+    alt_envio = max(int(alt), 4)
+
+    servicos = []
+    erros_retornados = []
+
+    # --- 1. COTAÇÃO ORIGEM JARAGUÁ (Correios, J&T, etc.) ---
+    payload_jaragua = {
+        "SellerCEP": FRENET_CEP_JARAGUA,
+        "RecipientCEP": str(cep_destino).replace("-", "").replace(" ", ""),
+        "ShipmentInvoiceValue": valor_declarado_envio,
+        "ShippingItemArray": [
+            {
+                "Weight": peso_envio,
+                "Length": comp_envio,
+                "Height": alt_envio,
+                "Width": larg_envio,
+                "Quantity": int(num_volumes),
+            }
+        ],
+    }
+
+    try:
+        res1 = requests.post(
+            url, json=payload_jaragua, headers=headers, timeout=6
+        )
+        if res1.status_code == 200:
+            dados1 = res1.json()
+            for op in dados1.get("ShippingSevicesArray", []):
+                if not op.get("Error"):
+                    nome_transp = op.get("Carrier", "").upper()
+                    if "JADLOG" not in nome_transp:
+                        nome_servico = op.get("ServiceDescription", "")
+                        preco_raw = op.get("ShippingPrice", 0.0)
+                        prazo = op.get("DeliveryTime", "-")
+
+                        try:
+                            preco_total = float(
+                                str(preco_raw).replace(",", ".").strip()
+                            )
+                            preco_fmt = f"{preco_total:.2f}".replace(".", ",")
+
+                            if num_volumes > 1:
+                                preco_por_volume = preco_total / float(
+                                    num_volumes
+                                )
+                                preco_vol_fmt = f"{preco_por_volume:.2f}".replace(
+                                    ".", ","
+                                )
+                                detalhe_vol = (
+                                    f"⚠️ Envio obrigatório em"
+                                    f" {int(num_volumes)} volumes (acima de 30"
+                                    f" kg)\n📦 Valor por volume: R$"
+                                    f" {preco_vol_fmt}\n💵 Total somado"
+                                    f" ({int(num_volumes)} vol.): R$"
+                                    f" {preco_fmt}"
+                                )
+                            else:
+                                detalhe_vol = ""
+                        except ValueError:
+                            preco_fmt = str(preco_raw)
+                            detalhe_vol = ""
+
+                        servicos.append({
+                            "TRANSPORTADORA": f"{nome_transp} ({nome_servico})",
+                            "VALOR_MINIMO": preco_fmt,
+                            "PRAZO": f"{prazo} Dias",
+                            "ROTA_ENVIO": "Origem Jaraguá - GO",
+                            "FONE": "Atendimento Online",
+                            "EXIGE_NF": "Sim",
+                            "DETALHE_TRANSPORTE": detalhe_vol,
+                        })
+                else:
+                    erros_retornados.append(
+                        f"{op.get('Carrier')}: {op.get('Msg')}"
+                    )
+    except Exception as e:
+        erros_retornados.append(f"Erro Jaraguá: {str(e)}")
+
+    # --- 2. COTAÇÃO ORIGEM GOIÂNIA (Jadlog + Transbessa R$ 30,00 por Volume) ---
+    payload_goiania = {
+        "SellerCEP": FRENET_CEP_GOIANIA,
+        "RecipientCEP": str(cep_destino).replace("-", "").replace(" ", ""),
+        "ShipmentInvoiceValue": valor_declarado_envio,
+        "ShippingItemArray": [
+            {
+                "Weight": peso_envio,
+                "Length": comp_envio,
+                "Height": alt_envio,
+                "Width": larg_envio,
+                "Quantity": int(num_volumes),
+            }
+        ],
+    }
+
+    try:
+        res2 = requests.post(
+            url, json=payload_goiania, headers=headers, timeout=6
+        )
+        if res2.status_code == 200:
+            dados2 = res2.json()
+            for op in dados2.get("ShippingSevicesArray", []):
+                if not op.get("Error"):
+                    nome_transp = op.get("Carrier", "").upper()
+                    if "JADLOG" in nome_transp:
+                        nome_servico = op.get("ServiceDescription", "")
+                        preco_raw = op.get("ShippingPrice", 0.0)
+                        prazo_raw = op.get("DeliveryTime", 0)
+
+                        try:
+                            val_jadlog_total = float(
+                                str(preco_raw).replace(",", ".").strip()
+                            )
+                            taxa_transbessa_total = 30.0 * float(num_volumes)
+                            total_soma_frete = (
+                                val_jadlog_total + taxa_transbessa_total
+                            )
+
+                            preco_fmt = f"{total_soma_frete:.2f}".replace(
+                                ".", ","
+                            )
+
+                            try:
+                                prazo_total = int(prazo_raw) + 1
+                            except ValueError:
+                                prazo_total = f"{prazo_raw} + 1"
+
+                            if num_volumes > 1:
+                                val_jadlog_vol = val_jadlog_total / float(
+                                    num_volumes
+                                )
+                                val_total_vol = val_jadlog_vol + 30.0
+
+                                val_jadlog_vol_fmt = (
+                                    f"{val_jadlog_vol:.2f}".replace(".", ",")
+                                )
+                                val_total_vol_fmt = (
+                                    f"{val_total_vol:.2f}".replace(".", ",")
+                                )
+
+                                detalhe_transbessa = (
+                                    f"⚠️ Envio obrigatório em"
+                                    f" {int(num_volumes)} volumes (acima de 30"
+                                    " kg)\n📦 Jadlog por vol.: R$"
+                                    f" {val_jadlog_vol_fmt} | Transbessa por"
+                                    " vol.: R$ 30,00 ➔ Total por volume: R$"
+                                    f" {val_total_vol_fmt}\n💵 Total Geral"
+                                    f" Somado ({int(num_volumes)} vol.): R$"
+                                    f" {preco_fmt}"
+                                )
+                            else:
+                                val_jadlog_fmt = (
+                                    f"{val_jadlog_total:.2f}".replace(".", ",")
+                                )
+                                detalhe_transbessa = (
+                                    f"📦 Cotação Jadlog: R$ {val_jadlog_fmt}\n🚚"
+                                    " Transbessa (Jaraguá ➔ Goiânia): R$"
+                                    " 30,00 (1 vol. x R$ 30,00 | Prazo: 1 dia)"
+                                )
+                        except ValueError:
+                            preco_fmt = str(preco_raw)
+                            detalhe_transbessa = (
+                                "Inclui frete Transbessa R$ 30,00 por volume"
+                            )
+                            prazo_total = prazo_raw
+
+                        servicos.append({
+                            "TRANSPORTADORA": (
+                                f"{nome_transp} ({nome_servico}) - via Goiânia"
+                            ),
+                            "VALOR_MINIMO": preco_fmt,
+                            "PRAZO": f"{prazo_total} Dias",
+                            "ROTA_ENVIO": "Jaraguá ➔ Goiânia ➔ Destino",
+                            "FONE": "Atendimento Online",
+                            "EXIGE_NF": "Sim",
+                            "DETALHE_TRANSPORTE": detalhe_transbessa,
+                        })
+    except Exception as e:
+        erros_retornados.append(f"Erro Goiânia: {str(e)}")
+
+    msg_status = (
+        "OK"
+        if servicos
+        else (
+            "; ".join(erros_retornados)
+            if erros_retornados
+            else "Nenhum serviço retornado pela Frenet"
+        )
+    )
+    return servicos, msg_status
 
 
 # Estilização CSS Ultra Moderna & Autêntica Cia do Jeans
@@ -590,17 +816,13 @@ if st.session_state.tela_ativa == "cotacao":
                 meio_envio_selecionado == "Padrão (Dividir acima de 50 kg)"
                 and peso_total_calculado > 50.0
             ):
-                num_volumes = int(peso_total_calculado // 50) + (
-                    1 if peso_total_calculado % 50 > 0 else 0
-                )
+                num_volumes = math.ceil(peso_total_calculado / 50.0)
             elif (
                 meio_envio_selecionado
                 == "Correios / J&T / Azul Cargo (Dividir acima de 30 kg)"
                 and peso_total_calculado > 30.0
             ):
-                num_volumes = int(peso_total_calculado // 30) + (
-                    1 if peso_total_calculado % 30 > 0 else 0
-                )
+                num_volumes = math.ceil(peso_total_calculado / 30.0)
             elif meio_envio_selecionado == "Não Dividir fardo":
                 num_volumes = 1
 
@@ -608,7 +830,7 @@ if st.session_state.tela_ativa == "cotacao":
             peso_total_calculado / num_volumes if num_volumes > 0 else 0
         )
         pecas_por_volume = (
-            total_pecas // num_volumes if num_volumes > 0 else 0
+            math.ceil(total_pecas / num_volumes) if num_volumes > 0 else 0
         )
 
         if total_pecas == 0:
@@ -656,6 +878,13 @@ if st.session_state.tela_ativa == "cotacao":
             comp, larg, alt = 100, 60, 50
             classificacao_tamanho = "XG (Fardo Master)"
 
+        # REGRA DE DIMENSIONAMENTO: SE DIVIDIDO EM 2 OU MAIS VOLUMES, LIMITE MÁXIMO DE 70 CM
+        if num_volumes >= 2 and comp > 70:
+            excesso = comp - 70
+            comp = 70
+            larg += math.ceil(excesso / 2)
+            alt += math.floor(excesso / 2)
+
         if "G" in classificacao_tamanho:
             visual_altura = comp
             visual_largura = larg
@@ -665,22 +894,23 @@ if st.session_state.tela_ativa == "cotacao":
             visual_largura = larg
             orientacao_texto = "Fardo Deitado"
 
-        valor_nf_meia = (
-            (qtd_calcas * 40)
-            + (qtd_bermudas * 33)
-            + (qtd_shorts * 33)
-            + (qtd_gola_o * 18)
-            + (qtd_tshirt * 19)
-            + (qtd_polo * 25)
-            + (qtd_vestidos * 45)
-            + (qtd_conjuntos * 50)
-            + (qtd_bones * 15)
-            + (qtd_camisas * 30)
-            + (qtd_saias * 35)
-            + (qtd_croppeds * 20)
+        # CÁLCULO BASEADO NAS MÉDIAS DE PREÇO DOS PRODUTOS
+        valor_nf_calculado = (
+            (qtd_calcas * 99.00)
+            + (qtd_bermudas * 70.00)
+            + (qtd_shorts * 79.50)
+            + (qtd_camisas * 107.50)
+            + (qtd_saias * 83.50)
+            + (qtd_croppeds * 49.00)
+            + (qtd_gola_o * 42.50)
+            + (qtd_tshirt * 42.50)
+            + (qtd_polo * 60.00)
+            + (qtd_vestidos * 89.50)
+            + (qtd_conjuntos * 110.00)
+            + (qtd_bones * 47.50)
         )
         valor_para_seguro = (
-            valor_manual_nf if valor_manual_nf > 0 else valor_nf_meia
+            valor_manual_nf if valor_manual_nf > 0 else valor_nf_calculado
         )
 
         txt_volumes_resumo = (
@@ -696,13 +926,14 @@ if st.session_state.tela_ativa == "cotacao":
         )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # DISPARADOR DE CÁLCULO
+    # DISPARADOR DE CÁLCULO COM RESET AUTOMÁTICO DA MEMÓRIA
     st.markdown("<br>", unsafe_allow_html=True)
     btn_calcular = st.button(
         "🚀 CALCULAR FRETE E GERAR WHATSAPP",
         type="primary",
         use_container_width=True,
         key="trigger_calculo",
+        on_click=resetar_texto_whatsapp,
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -802,24 +1033,86 @@ if st.session_state.tela_ativa == "cotacao":
             st.markdown("</div>", unsafe_allow_html=True)
 
             opcoes_whatsapp = []
+            cotacoes_api = []
 
-            if df_fretes_fixos.empty:
-                st.warning(
-                    "⚠️ Planilha 'SISTEMA_DE_FRETES_AUTOMATIZADO.xlsx' não"
-                    " encontrada."
+            # 1. COTAÇÃO FRENET (API)
+            if cep_input:
+                cotacoes_api, status_frenet = cotar_frenet(
+                    cep_input,
+                    peso_total_calculado,
+                    comp,
+                    larg,
+                    alt,
+                    valor_para_seguro,
+                    num_volumes,
                 )
-            else:
+
+                if cotacoes_api:
+                    st.markdown("### ⚡ Opções Online (J&T / Correios / Jadlog)")
+                    for item in cotacoes_api:
+                        txt_detalhe_item = (
+                            f"\n_{item['DETALHE_TRANSPORTE']}_"
+                            if item.get("DETALHE_TRANSPORTE")
+                            else ""
+                        )
+                        opcoes_whatsapp.append(
+                            f"🚛 *{item['TRANSPORTADORA']}*\n💰 Valor:"
+                            f" R$ {item['VALOR_MINIMO']}\n⏱️ Prazo:"
+                            f" {item['PRAZO']}{txt_detalhe_item}\n"
+                        )
+
+                        html_detalhe = (
+                            f'<br><span style="font-size:11px;'
+                            f' color:#0284c7;">{item["DETALHE_TRANSPORTE"].replace(chr(10), "<br>")}</span>'
+                            if item.get("DETALHE_TRANSPORTE")
+                            else ""
+                        )
+
+                        st.markdown(
+                            f"""
+                        <div class="card-frete" style="border-left: 5px solid #2563eb;">
+                            <div>
+                                <strong style="font-size:16px; color:#0f172a;"><b>🚛 {item['TRANSPORTADORA']}</b></strong><br>
+                                <span style="font-size:12px; color:#94a3b8;">⏱️ Prazo: {item['PRAZO']}</span>{html_detalhe}
+                            </div>
+                            <div style="text-align: right;"><span style="font-size:18px; font-weight:700; color:#0f172a;">R$ {item['VALOR_MINIMO']}</span></div>
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.warning(f"⚠️ Diagnóstico API Frenet: {status_frenet}")
+
+            # 2. COTAÇÃO LOCAL (EXCEL) - FILTRO DE DUPLICIDADE APLICADO
+            if not df_fretes_fixos.empty:
                 resultados_fixos = df_fretes_fixos[
                     (df_fretes_fixos["CIDADE"] == cidade_busca)
                     & (df_fretes_fixos["UF"] == uf_busca)
                 ]
 
                 if not resultados_fixos.empty:
-                    if btn_calcular:
-                        st.markdown(
-                            "### 🏁 Transportadoras Encontradas para a Região"
+                    transportadoras_online = [
+                        item["TRANSPORTADORA"].upper() for item in cotacoes_api
+                    ]
+
+                    resultados_filtrados = []
+                    for idx, row in resultados_fixos.iterrows():
+                        nome_planilha = (
+                            str(row["TRANSPORTADORA"]).upper().strip()
                         )
-                        for idx, row in resultados_fixos.iterrows():
+                        ja_existe_online = any(
+                            transp_api in nome_planilha
+                            or nome_planilha in transp_api
+                            for transp_api in transportadoras_online
+                        )
+                        if not ja_existe_online:
+                            resultados_filtrados.append(row)
+
+                    if resultados_filtrados:
+                        st.markdown(
+                            "### 🏁 Transportadoras Regionais (Planilha)"
+                        )
+                        for row in resultados_filtrados:
                             print_prazo = str(row["PRAZO"])
                             if (
                                 "cotar" not in print_prazo.lower()
@@ -842,25 +1135,12 @@ if st.session_state.tela_ativa == "cotacao":
                                 unsafe_allow_html=True,
                             )
 
-                    for idx, row in resultados_fixos.iterrows():
-                        print_prazo = str(row["PRAZO"])
-                        if (
-                            "cotar" not in print_prazo.lower()
-                            and "dias" not in print_prazo.lower()
-                            and print_prazo != "-"
-                        ):
-                            print_prazo = f"{print_prazo} Dias"
-                        opcoes_whatsapp.append(
-                            f"🚛 *{row['TRANSPORTADORA']}*\n"
-                            f"💰 Mínimo: R$ {row['VALOR_MINIMO']}\n"
-                            f"⏱️ Prazo: {print_prazo}\n"
-                            f"📞 Contato: {row['FONE']}\n"
-                        )
-                else:
-                    st.warning(
-                        "Nenhuma transportadora cadastrada no Excel regional"
-                        f" para {cidade_busca}-{uf_busca}."
-                    )
+                            opcoes_whatsapp.append(
+                                f"🚛 *{row['TRANSPORTADORA']}*\n"
+                                f"💰 Mínimo: R$ {row['VALOR_MINIMO']}\n"
+                                f"⏱️ Prazo: {print_prazo}\n"
+                                f"📞 Contato: {row['FONE']}\n"
+                            )
 
             # PASSO 4: ENVIAR PARA O WHATSAPP
             if opcoes_whatsapp:
@@ -944,7 +1224,7 @@ if st.session_state.tela_ativa == "cotacao":
                 st.markdown("</div>", unsafe_allow_html=True)
 
 
-# --- EXIBIÇÃO DA TELA: RASTREAMENTO ---
+# --- EXIBIÇÃO DA TELA: RASTREAMENTO (MODELO ANTIGO IDENTICO REVERTIDO) ---
 elif st.session_state.tela_ativa == "rastreio":
     st.markdown('<div class="bloco-etapa">', unsafe_allow_html=True)
     st.markdown(
