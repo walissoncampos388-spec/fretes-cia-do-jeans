@@ -939,7 +939,7 @@ if st.session_state.tela_ativa == "cotacao":
                                 # 1. Taxa fixa Transbessa por volume
                                 taxa_transbessa = 30.0 * float(num_volumes)
 
-                                # 2. Faixas de preço Carvalima baseadas no peso calculated
+                                # 2. Faixas de preço Carvalima baseadas no peso calculado
                                 if peso_total_calculado <= 10.0:
                                     val_carvalima = 84.33
                                 elif peso_total_calculado <= 30.0:
@@ -1254,13 +1254,13 @@ elif st.session_state.tela_ativa == "rastreio":
                 f" {transportadora_rastreio}"
             )
 
-            # Tratamento especial para os Correios devido à proteção do CAPTCHA em iframe
-            if transportadora_rastreio == "Correios":
+            # Tratamento especial para transportadoras que bloqueiam exibição em iframe (Correios e J&T)
+            if transportadora_rastreio in ["Correios", "J&T Express"]:
                 st.warning(
-                    "⚠️ Os Correios não permitem a resolução do CAPTCHA dentro de janelas integradas por motivos de segurança."
+                    f"⚠️ A **{transportadora_rastreio}** bloqueia a consulta direta dentro de janelas integradas por motivos de segurança do servidor deles."
                 )
                 st.markdown(
-                    f"👉 **[CLIQUE AQUI PARA ABRIR O RASTREIO DOS CORREIOS EM NOVA ABA]({link_rastreio_final})**"
+                    f"👉 **[CLIQUE AQUI PARA ABRIR O SITE DA {transportadora_rastreio.upper()} EM NOVA ABA]({link_rastreio_final})**"
                 )
             else:
                 st.markdown(
