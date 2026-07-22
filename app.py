@@ -972,7 +972,7 @@ if st.session_state.tela_ativa == "cotacao":
                     "🚚 *OPÇÕES DE ENVIO:*\n\n"
                     f"{texto_opcoes}"
                     "-----------------------------------------\n\n"
-                    "_Qual destas opções fica melhor para fazermos o despacho?_"
+                    "_Qual destas opções fica melhor para fazermos o seu envio?_"
                 )
 
                 texto_editavel = st.text_area(
