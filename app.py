@@ -925,6 +925,7 @@ if st.session_state.tela_ativa == "cotacao":
                             "### 🏁 Outras Transportadoras"
                         )
                         for row in resultados_filtrados:
+                            nome_transp_raw = str(row["TRANSPORTADORA"]).upper().strip()
                             print_prazo = str(row["PRAZO"])
                             if (
                                 "cotar" not in print_prazo.lower()
@@ -933,26 +934,82 @@ if st.session_state.tela_ativa == "cotacao":
                             ):
                                 print_prazo = f"{print_prazo} Dias"
 
-                            st.markdown(
-                                f"""
-                            <div class="card-frete" style="border-left: 5px solid #1e3a8a;">
-                                <div>
-                                    <strong style="font-size:16px; color:#0f172a;"><b>🚛 {row['TRANSPORTADORA']}</b></strong><br>
-                                    <span style="font-size:13px; color:#64748b;">📍 Rota: {row['ROTA_ENVIO']} | 📞 Fone: {row['FONE']}</span><br>
-                                    <span style="font-size:12px; color:#94a3b8;">⏱️ Prazo: {print_prazo} | 📄 Exige NF: {row['EXIGE_NF']}</span>
-                                </div>
-                                <div style="text-align: right;"><span style="font-size:12px; color:#64748b; font-weight:600;">Mínimo</span><br><span style="font-size:18px; font-weight:700; color:#0f172a;">R$ {row['VALOR_MINIMO']}</span></div>
-                            </div>
-                            """,
-                                unsafe_allow_html=True,
-                            )
+                            # --- TRATAMENTO ESPECIAL INTELIGENTE: BESSA + CARVALIMA ---
+                            if "CARVALIMA" in nome_transp_raw:
+                                # 1. Taxa fixa Transbessa por volume
+                                taxa_transbessa = 30.0 * float(num_volumes)
 
-                            opcoes_whatsapp.append(
-                                f"🚛 *{row['TRANSPORTADORA']}*\n"
-                                f"💰 Mínimo: R$ {row['VALOR_MINIMO']}\n"
-                                f"⏱️ Prazo: {print_prazo}\n"
-                                f"📞 Contato: {row['FONE']}\n"
-                            )
+                                # 2. Faixas de preço Carvalima baseadas no peso calculado
+                                if peso_total_calculado <= 10.0:
+                                    val_carvalima = 84.33
+                                elif peso_total_calculado <= 30.0:
+                                    val_carvalima = 138.39
+                                elif peso_total_calculado <= 70.0:
+                                    val_carvalima = 210.83
+                                else:
+                                    excesso_kg = peso_total_calculado - 70.0
+                                    val_carvalima = 210.83 + (excesso_kg * 2.90)
+
+                                total_bessa_carvalima = taxa_transbessa + val_carvalima
+
+                                # Formatação de valores
+                                val_total_fmt = f"{total_bessa_carvalima:.2f}".replace(".", ",")
+                                val_carvalima_fmt = f"{val_carvalima:.2f}".replace(".", ",")
+                                val_bessa_fmt = f"{taxa_transbessa:.2f}".replace(".", ",")
+
+                                # Detalhamento idêntico ao estilo da Jadlog
+                                html_detalhe_carvalima = (
+                                    f'<br><span style="font-size:11px; color:#0284c7;">'
+                                    f"🚚 Transbessa (Jaraguá ➔ Goiânia): R$ {val_bessa_fmt} ({num_volumes} vol. x R$ 30,00)<br>"
+                                    f"📦 Carvalima (Goiânia ➔ Destino): R$ {val_carvalima_fmt} (Faixa para {peso_total_calculado:.2f} kg)"
+                                    f"</span>"
+                                )
+
+                                st.markdown(
+                                    f"""
+                                <div class="card-frete" style="border-left: 5px solid #1e3a8a;">
+                                    <div>
+                                        <strong style="font-size:16px; color:#0f172a;"><b>🚛 {row['TRANSPORTADORA']}</b></strong><br>
+                                        <span style="font-size:12px; color:#64748b;">⏱️ Prazo: {print_prazo} | 📞 Fone: {row['FONE']}</span>
+                                        {html_detalhe_carvalima}
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span style="font-size:18px; font-weight:700; color:#0f172a;">R$ {val_total_fmt}</span>
+                                    </div>
+                                </div>
+                                """,
+                                    unsafe_allow_html=True,
+                                )
+
+                                opcoes_whatsapp.append(
+                                    f"🚛 *{row['TRANSPORTADORA']}*\n"
+                                    f"💰 Total: R$ {val_total_fmt}\n"
+                                    f"⏱️ Prazo: {print_prazo}\n"
+                                    f"_(Transbessa R$ {val_bessa_fmt} + Carvalima R$ {val_carvalima_fmt})_\n"
+                                )
+
+                            # --- DEMAIS TRANSPORTADORAS DA PLANILHA ---
+                            else:
+                                st.markdown(
+                                    f"""
+                                <div class="card-frete" style="border-left: 5px solid #1e3a8a;">
+                                    <div>
+                                        <strong style="font-size:16px; color:#0f172a;"><b>🚛 {row['TRANSPORTADORA']}</b></strong><br>
+                                        <span style="font-size:13px; color:#64748b;">📍 Rota: {row['ROTA_ENVIO']} | 📞 Fone: {row['FONE']}</span><br>
+                                        <span style="font-size:12px; color:#94a3b8;">⏱️ Prazo: {print_prazo} | 📄 Exige NF: {row['EXIGE_NF']}</span>
+                                    </div>
+                                    <div style="text-align: right;"><span style="font-size:12px; color:#64748b; font-weight:600;">Mínimo</span><br><span style="font-size:18px; font-weight:700; color:#0f172a;">R$ {row['VALOR_MINIMO']}</span></div>
+                                </div>
+                                """,
+                                    unsafe_allow_html=True,
+                                )
+
+                                opcoes_whatsapp.append(
+                                    f"🚛 *{row['TRANSPORTADORA']}*\n"
+                                    f"💰 Mínimo: R$ {row['VALOR_MINIMO']}\n"
+                                    f"⏱️ Prazo: {print_prazo}\n"
+                                    f"📞 Contato: {row['FONE']}\n"
+                                )
 
             # WHATSAPP
             if opcoes_whatsapp:
