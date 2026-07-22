@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# CONTROLE DE NAVEGAÇÃO À PROVA DE REFRESH (SESSION STATE) - Inicializado no topo
+# CONTROLE DE NAVEGAÇÃO
 if "tela_ativa" not in st.session_state:
     st.session_state.tela_ativa = "cotacao"
 if "cidade_input_fiel" not in st.session_state:
@@ -35,7 +35,7 @@ def resetar_texto_whatsapp():
         del st.session_state["txt_area_print"]
 
 
-# Funções de clique rápido para trocar de tela
+# Funções para alternar de tela
 def mudar_para_cotacao():
     st.session_state.tela_ativa = "cotacao"
 
@@ -258,34 +258,29 @@ def cotar_frenet(
     return servicos, msg_status
 
 
-# Estilização CSS Ultra Moderna & Autêntica Cia do Jeans
+# Estilização CSS
 st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
         .stDeployButton {display:none;}
         footer {visibility: hidden;}
         
-        /* Reset e Background Global */
         html, body, [data-testid="stAppViewContainer"] {
             background-color: #f8fafc !important;
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
             color: #0f172a;
         }
-        
         .block-container {
             padding-top: 2rem !important;
             padding-bottom: 3rem !important;
             max-width: 1140px !important;
         }
-        
-        /* Card Contêiner Moderno */
         .bloco-etapa {
             background-color: #ffffff;
             padding: 28px;
             border-radius: 16px;
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
             margin-bottom: 24px;
             border: 1px solid #e2e8f0;
             position: relative;
@@ -294,136 +289,24 @@ st.markdown(
         .bloco-etapa::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
+            top: 0; left: 0; width: 100%; height: 4px;
             background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
         }
-        
         .titulo-etapa {
-            color: #0f172a;
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            color: #0f172a; font-size: 16px; font-weight: 700;
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.6px;
         }
-        
-        /* Cards de Frete */
         .card-frete {
-            background-color: #ffffff;
-            padding: 20px 24px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background-color: #ffffff; padding: 20px 24px; border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 14px;
+            display: flex; justify-content: space-between; align-items: center;
             border: 1px solid #e2e8f0;
-            transition: all 0.2s ease;
         }
-        .card-frete:hover {
-            border-color: #cbd5e1;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-        }
-        
-        /* Abas Estilo Segment Control */
-        div.stButton > button[key="aba_cot_btn"] {
-            background-color: """
-    + (
-        "#1e3a8a"
-        if st.session_state.tela_ativa == "cotacao"
-        else "#ffffff"
-    )
-    + """ !important;
-            color: """
-    + (
-        "#ffffff"
-        if st.session_state.tela_ativa == "cotacao"
-        else "#64748b"
-    )
-    + """ !important;
-            font-weight: 700 !important;
-            font-size: 15px !important;
-            border: """
-    + (
-        "none"
-        if st.session_state.tela_ativa == "cotacao"
-        else "1px solid #e2e8f0"
-    )
-    + """ !important;
-            padding: 16px 20px !important;
-            border-radius: 12px !important;
-            width: 100% !important;
-            box-shadow: """
-    + (
-        "0 10px 25px -5px rgba(30, 58, 138, 0.3)"
-        if st.session_state.tela_ativa == "cotacao"
-        else "0 2px 4px rgba(0,0,0,0.02)"
-    )
-    + """ !important;
-            transition: all 0.2s ease !important;
-        }
-        div.stButton > button[key="aba_ras_btn"] {
-            background-color: """
-    + (
-        "#1e3a8a"
-        if st.session_state.tela_ativa == "rastreio"
-        else "#ffffff"
-    )
-    + """ !important;
-            color: """
-    + (
-        "#ffffff"
-        if st.session_state.tela_ativa == "rastreio"
-        else "#64748b"
-    )
-    + """ !important;
-            font-weight: 700 !important;
-            font-size: 15px !important;
-            border: """
-    + (
-        "none"
-        if st.session_state.tela_ativa == "rastreio"
-        else "1px solid #e2e8f0"
-    )
-    + """ !important;
-            padding: 16px 20px !important;
-            border-radius: 12px !important;
-            width: 100% !important;
-            box-shadow: """
-    + (
-        "0 10px 25px -5px rgba(30, 58, 138, 0.3)"
-        if st.session_state.tela_ativa == "rastreio"
-        else "0 2px 4px rgba(0,0,0,0.02)"
-    )
-    + """ !important;
-            transition: all 0.2s ease !important;
-        }
-        
-        /* Botão Disparador Principal */
         div.stButton > button[key="trigger_calculo"], div.stButton > button[key="action_processar_rastreio"] {
             background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
-            color: white !important;
-            font-weight: 700 !important;
-            font-size: 16px !important;
-            padding: 16px 28px !important;
-            border-radius: 12px !important;
-            border: none !important;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4) !important;
-            transition: all 0.2s ease !important;
+            color: white !important; font-weight: 700 !important; font-size: 16px !important;
+            padding: 16px 28px !important; border-radius: 12px !important; border: none !important;
         }
-        div.stButton > button[key="trigger_calculo"]:hover, div.stButton > button[key="action_processar_rastreio"]:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 14px 30px -5px rgba(37, 99, 235, 0.5) !important;
-        }
-
-        /* Botão de Copiar Texto */
         div.stButton > button[key="btn_pure_copy_frete"], div.stButton > button[key="btn_pure_copy_rastreio"] {
             background-color: #0f172a !important;
             color: #ffffff !important;
@@ -432,15 +315,8 @@ st.markdown(
             padding: 14px !important;
             border-radius: 10px !important;
             border: none !important;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
-            cursor: pointer !important;
             width: 100% !important;
             margin-top: 8px !important;
-            transition: all 0.2s ease !important;
-        }
-        div.stButton > button[key="btn_pure_copy_frete"]:hover, div.stButton > button[key="btn_pure_copy_rastreio"]:hover {
-            background-color: #1e293b !important;
-            transform: translateY(-1px) !important;
         }
     </style>
 """,
@@ -448,7 +324,6 @@ st.markdown(
 )
 
 
-# CACHE ULTRA-RÁPIDO: Organização dos dados da planilha de fretes fixos
 @st.cache_data(ttl=3600)
 def carregar_e_limpar_dados():
     try:
@@ -575,7 +450,6 @@ def carregar_e_limpar_dados():
 df_fretes_fixos = carregar_e_limpar_dados()
 
 
-# Imagem
 def arrumar_imagem_local(caminho):
     try:
         with open(caminho, "rb") as image_file:
@@ -586,27 +460,18 @@ def arrumar_imagem_local(caminho):
 
 img_base64 = arrumar_imagem_local("logo_ciadojeans.PNG")
 
-# Cabeçalho Ajustado: Logo Ampliada Preenchendo o Banner Azul Sem Transbordar
+# Topo
 st.markdown(
     f"""
-    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 12px 16px 14px 16px; border-radius: 16px; text-align: center; margin-bottom: 24px; box-shadow: 0 12px 20px -5px rgba(15, 23, 42, 0.2); position: relative; overflow: hidden;'>
-        <div style='position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(59, 130, 246, 0.15); border-radius: 50%; blur: 40px;'></div>
-        <div style='margin: 0 auto; position: relative; z-index: 2;'>
-            <img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain; filter: drop-shadow(0px 8px 16px rgba(0,0,0,0.3));">
-        </div>
-        <div style='position: relative; z-index: 2; margin-top: -6px;'>
-            <p style='color: #93c5fd; font-weight: 600; margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 2px;'>
-                ⚡ Logística & Cotação Inteligente
-            </p>
-        </div>
+    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 12px 16px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+        <img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">
+        <p style='color: #93c5fd; font-weight: 600; margin-top: -6px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# Criamos duas colunas para simular abas com gatilho instantâneo
 col_aba1, col_aba2 = st.columns(2)
-
 with col_aba1:
     st.button(
         "📊 COTAR NOVO FRETE",
@@ -614,7 +479,6 @@ with col_aba1:
         key="aba_cot_btn",
         on_click=mudar_para_cotacao,
     )
-
 with col_aba2:
     st.button(
         "📦 RASTREAR ENCOMENDA",
@@ -625,11 +489,10 @@ with col_aba2:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-
-# --- EXIBIÇÃO DA TELA: COTAÇÃO ---
+# TELA COTAÇÃO
 if st.session_state.tela_ativa == "cotacao":
 
-    # PASSO 1: LOCALIZAÇÃO DO CLIENTE
+    # PASSO 1
     st.markdown('<div class="bloco-etapa">', unsafe_allow_html=True)
     st.markdown(
         '<div class="titulo-etapa">📍 PASSO 1: Destino do Pedido</div>',
@@ -646,14 +509,14 @@ if st.session_state.tela_ativa == "cotacao":
         )
 
     desabilitar_campos = False
-
     if cep_input:
         cep_limpo = cep_input.replace("-", "").replace(" ", "")
         if len(cep_limpo) == 8 and cep_limpo.isdigit():
             try:
-                url_api = f"https://opencep.com/v1/{cep_limpo}"
-                resposta = requests.get(url_api, timeout=3).json()
-                if "localidade" in resposta and resposta.get("localidade"):
+                resposta = requests.get(
+                    f"https://opencep.com/v1/{cep_limpo}", timeout=3
+                ).json()
+                if resposta.get("localidade"):
                     st.session_state["cidade_input_fiel"] = resposta.get(
                         "localidade", ""
                     ).upper()
@@ -661,95 +524,66 @@ if st.session_state.tela_ativa == "cotacao":
                         "uf", ""
                     ).upper()
                     desabilitar_campos = True
-                else:
-                    desabilitar_campos = False
             except Exception:
-                desabilitar_campos = False
+                pass
 
     with col2:
-        cidade_automatica = st.text_input(
+        st.text_input(
             "📍 Cidade Identificada:",
-            placeholder="Digite a Cidade se não buscar...",
             disabled=desabilitar_campos,
             key="cidade_input_fiel",
         )
-
     with col3:
-        uf_automatica = st.text_input(
-            "🏳️ UF:",
-            placeholder="EX: GO",
-            disabled=desabilitar_campos,
-            key="uf_input_fiel",
+        st.text_input(
+            "🏳️ UF:", disabled=desabilitar_campos, key="uf_input_fiel"
         )
-
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # PASSO 2: ENTRADA DE PRODUTOS
+    # PASSO 2
     st.markdown('<div class="bloco-etapa">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="titulo-etapa">👖 PASSO 2: O que estamos enviando'
-        ' hoje?</div>',
+        '<div class="titulo-etapa">👖 PASSO 2: Produtos</div>',
         unsafe_allow_html=True,
     )
     c1, c2, c3 = st.columns(3)
     with c1:
         qtd_calcas = st.number_input(
-            "Quantidade de Calças:", min_value=0, value=0, step=1, key="calc_un"
+            "Quantidade de Calças:", min_value=0, value=0, key="calc_un"
         )
         qtd_bermudas = st.number_input(
-            "Quantidade de Bermudas:",
-            min_value=0,
-            value=0,
-            step=1,
-            key="berm_un",
+            "Quantidade de Bermudas:", min_value=0, value=0, key="berm_un"
         )
         qtd_shorts = st.number_input(
-            "Quantidade de Shorts:", min_value=0, value=0, step=1, key="shor_un"
+            "Quantidade de Shorts:", min_value=0, value=0, key="shor_un"
         )
         qtd_camisas = st.number_input(
-            "Quantidade de Camisas:", min_value=0, value=0, step=1, key="cam_un"
+            "Quantidade de Camisas:", min_value=0, value=0, key="cam_un"
         )
         qtd_saias = st.number_input(
-            "Quantidade de Saias:", min_value=0, value=0, step=1, key="saia_un"
+            "Quantidade de Saias:", min_value=0, value=0, key="saia_un"
         )
         qtd_croppeds = st.number_input(
-            "Quantidade de Croppeds:",
-            min_value=0,
-            value=0,
-            step=1,
-            key="crop_un",
+            "Quantidade de Croppeds:", min_value=0, value=0, key="crop_un"
         )
 
     with c2:
         qtd_gola_o = st.number_input(
-            "Quantidade de Gola O:", min_value=0, value=0, step=1, key="gola_un"
+            "Quantidade de Gola O:", min_value=0, value=0, key="gola_un"
         )
         qtd_tshirt = st.number_input(
-            "Quantidade de T-Shirt:", min_value=0, value=0, step=1, key="tsh_un"
+            "Quantidade de T-Shirt:", min_value=0, value=0, key="tsh_un"
         )
         qtd_polo = st.number_input(
-            "Quantidade de Gola Polo:",
-            min_value=0,
-            value=0,
-            step=1,
-            key="polo_un",
+            "Quantidade de Gola Polo:", min_value=0, value=0, key="polo_un"
         )
         qtd_vestidos = st.number_input(
-            "Quantidade de Vestidos:",
-            min_value=0,
-            value=0,
-            step=1,
-            key="vest_un",
+            "Quantidade de Vestidos:", min_value=0, value=0, key="vest_un"
         )
         qtd_conjuntos = st.number_input(
-            "Quantidade de Conjuntos:",
-            min_value=0,
-            value=0,
-            step=1,
-            key="conj_un",
+            "Quantidade de Conjuntos:", min_value=0, value=0, key="conj_un"
         )
         qtd_bones = st.number_input(
-            "Quantidade de Bonés:", min_value=0, value=0, step=1, key="bone_un"
+            "Quantidade de Bonés:", min_value=0, value=0, key="bone_un"
         )
 
     peso_pecas_puro = (
@@ -786,11 +620,8 @@ if st.session_state.tela_ativa == "cotacao":
 
     with c3:
         valor_manual_nf_txt = st.text_input(
-            "✍️ Valor Real da NF (Opcional):",
-            placeholder="Ex: 1250,00",
-            key="nf_manual_txt",
+            "✍️ Valor Real da NF (Opcional):", key="nf_manual_txt"
         ).strip()
-
         valor_manual_nf = 0.0
         if valor_manual_nf_txt:
             try:
@@ -798,10 +629,10 @@ if st.session_state.tela_ativa == "cotacao":
                     valor_manual_nf_txt.replace(".", "").replace(",", ".")
                 )
             except ValueError:
-                st.error("⚠️ Digite um valor numérico válido para a NF.")
+                pass
 
         meio_envio_selecionado = st.selectbox(
-            "📦 Regra de Divisão do Fardo:",
+            "📦 Regra de Divisão:",
             [
                 "Padrão (Dividir acima de 50 kg)",
                 "Correios / J&T / Azul Cargo (Dividir acima de 30 kg)",
@@ -823,8 +654,6 @@ if st.session_state.tela_ativa == "cotacao":
                 and peso_total_calculado > 30.0
             ):
                 num_volumes = math.ceil(peso_total_calculado / 30.0)
-            elif meio_envio_selecionado == "Não Dividir fardo":
-                num_volumes = 1
 
         peso_por_volume = (
             peso_total_calculado / num_volumes if num_volumes > 0 else 0
@@ -834,49 +663,53 @@ if st.session_state.tela_ativa == "cotacao":
         )
 
         if total_pecas == 0:
-            tipo_embalagem = "Nenhum produto"
-            comp, larg, alt = 0, 0, 0
-            classificacao_tamanho = "Sem Carga"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Nenhum produto",
+                0,
+                0,
+                0,
+                "Sem Carga",
+            )
         elif pecas_por_volume <= 15:
-            tipo_embalagem = (
-                "Caixa Pequena"
-                if num_volumes == 1
-                else f"{num_volumes} Caixas Pequenas"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Caixa Pequena",
+                40,
+                30,
+                20,
+                "PP (Caixa Pequena)",
             )
-            comp, larg, alt = 40, 30, 20
-            classificacao_tamanho = "PP (Caixa Pequena)"
         elif pecas_por_volume <= 30:
-            tipo_embalagem = (
-                "Caixa Média"
-                if num_volumes == 1
-                else f"{num_volumes} Caixas Médias"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Caixa Média",
+                50,
+                40,
+                30,
+                "P (Caixa Média)",
             )
-            comp, larg, alt = 50, 40, 30
-            classificacao_tamanho = "P (Caixa Média)"
         elif pecas_por_volume <= 60:
-            tipo_embalagem = (
-                "Fardo Comercial"
-                if num_volumes == 1
-                else f"{num_volumes} Fardos Comerciais"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Fardo Comercial",
+                60,
+                45,
+                35,
+                "M (Fardo Padrão)",
             )
-            comp, larg, alt = 60, 45, 35
-            classificacao_tamanho = "M (Fardo Padrão)"
         elif pecas_por_volume <= 120:
-            tipo_embalagem = (
-                "Fardo Comercial"
-                if num_volumes == 1
-                else f"{num_volumes} Fardos Comerciais"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Fardo Comercial",
+                80,
+                50,
+                40,
+                "G (Fardo Grande)",
             )
-            comp, larg, alt = 80, 50, 40
-            classificacao_tamanho = "G (Fardo Grande)"
         else:
-            tipo_embalagem = (
-                "Fardo Comercial"
-                if num_volumes == 1
-                else f"{num_volumes} Fardos Comerciais"
+            tipo_embalagem, comp, larg, alt, classificacao_tamanho = (
+                "Fardo Comercial",
+                100,
+                60,
+                50,
+                "XG (Fardo Master)",
             )
-            comp, larg, alt = 100, 60, 50
-            classificacao_tamanho = "XG (Fardo Master)"
 
         # REGRA DE DIMENSIONAMENTO: SE DIVIDIDO EM 2 OU MAIS VOLUMES, LIMITE MÁXIMO DE 70 CM
         if num_volumes >= 2 and comp > 70:
@@ -885,14 +718,9 @@ if st.session_state.tela_ativa == "cotacao":
             larg += math.ceil(excesso / 2)
             alt += math.floor(excesso / 2)
 
-        if "G" in classificacao_tamanho:
-            visual_altura = comp
-            visual_largura = larg
-            orientacao_texto = "Fardo em Pé"
-        else:
-            visual_altura = alt
-            visual_largura = larg
-            orientacao_texto = "Fardo Deitado"
+        orientacao_texto = (
+            "Fardo em Pé" if "G" in classificacao_tamanho else "Fardo Deitado"
+        )
 
         # CÁLCULO BASEADO NAS MÉDIAS DE PREÇO DOS PRODUTOS
         valor_nf_calculado = (
@@ -913,21 +741,13 @@ if st.session_state.tela_ativa == "cotacao":
             valor_manual_nf if valor_manual_nf > 0 else valor_nf_calculado
         )
 
-        txt_volumes_resumo = (
-            f" ({num_volumes} Vol. de {peso_por_volume:.2f} kg)"
-            if num_volumes > 1
-            else ""
-        )
         st.info(
-            f"**📊 Resumo do Pedido:**\n* **Carga:** {total_pecas} un |"
-            f" {peso_total_calculado:.2f} kg{txt_volumes_resumo}\n*"
-            f" **Embalagem:** {tipo_embalagem}\n* **Seguro:** R$"
-            f" {valor_para_seguro:.2f}"
+            f"**📊 Resumo:** {total_pecas} un | {peso_total_calculado:.2f} kg |"
+            f" Seguro/NF: R$ {valor_para_seguro:.2f}"
         )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # DISPARADOR DE CÁLCULO COM RESET AUTOMÁTICO DA MEMÓRIA
-    st.markdown("<br>", unsafe_allow_html=True)
+    # BOTÃO COM CALLBACK ON_CLICK QUE GARANTE QUE O TEXTO ANTIGO SERÁ APAGADO
     btn_calcular = st.button(
         "🚀 CALCULAR FRETE E GERAR WHATSAPP",
         type="primary",
@@ -935,9 +755,7 @@ if st.session_state.tela_ativa == "cotacao":
         key="trigger_calculo",
         on_click=resetar_texto_whatsapp,
     )
-    st.markdown("<br>", unsafe_allow_html=True)
 
-    # PASSO 3: RESULTADOS E WHATSAPP
     if btn_calcular or st.session_state.get("frete_calculado_ok", False):
         st.session_state["frete_calculado_ok"] = True
         cidade_busca = (
@@ -945,17 +763,13 @@ if st.session_state.tela_ativa == "cotacao":
         )
         uf_busca = st.session_state.get("uf_input_fiel", "").strip().upper()
 
-        if not cidade_busca:
+        if not cidade_busca or total_pecas == 0:
             st.error(
-                "❌ Por favor, informe um CEP ou preencha a Cidade no Passo 1."
-            )
-        elif total_pecas == 0:
-            st.error(
-                "❌ Insira a quantidade de produtos no Passo 2 para calcular."
+                "❌ Preencha o CEP/Cidade e adicione produtos para calcular."
             )
         else:
 
-            # --- BLOCO VISUAL: CALCULADORA DE VOLUMETRIA E ESCALA HUMANA ---
+            # BLOCO VISUAL DE DIMENSÕES E COMPARAÇÃO DE ESCALA
             st.markdown('<div class="bloco-etapa">', unsafe_allow_html=True)
             st.markdown(
                 f'<div class="titulo-etapa">📐 Dimensões e Comparativo de'
@@ -986,6 +800,10 @@ if st.session_state.tela_ativa == "cotacao":
 """)
 
             with v_col2:
+                visual_altura = (
+                    comp if "G" in classificacao_tamanho else alt
+                )
+                visual_largura = larg
                 px_alt_fardo = int(visual_altura * 1.3)
                 px_larg_fardo = int(visual_largura * 1.3)
 
@@ -1008,22 +826,14 @@ if st.session_state.tela_ativa == "cotacao":
 <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; flex-shrink: 0;">
 <div style="font-family: sans-serif; font-size: 11px; color: #64748b; margin-bottom: 4px;">Pessoa (1.75m)</div>
 <div style="width: 50px; height: 215px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-bottom: 0px;">
-    <!-- Cabeça -->
     <div style="width: 26px; height: 26px; background-color: #f3c693; border-radius: 50%; margin-bottom: 4px;"></div>
-    <!-- Tronco (Camisa Azul) -->
     <div style="width: 38px; height: 65px; background-color: #1e3a8a; border-radius: 4px 4px 0 0; position: relative;">
-        <!-- Braços -->
         <div style="width: 6px; height: 45px; background-color: #f3c693; position: absolute; left: -7px; top: 0; border-radius: 3px;"></div>
         <div style="width: 6px; height: 45px; background-color: #f3c693; position: absolute; right: -7px; top: 0; border-radius: 3px;"></div>
     </div>
-    <!-- Pernas (Calça Escura) -->
     <div style="width: 34px; height: 105px; display: flex; justify-content: space-between;">
-        <div style="width: 14px; height: 105px; background-color: #0f172a; border-radius: 0 0 2px 2px; position: relative;">
-            <div style="width: 18px; height: 6px; background-color: #f3c693; position: absolute; bottom: 0; left: -2px; border-radius: 2px 0 0 0;"></div>
-        </div>
-        <div style="width: 14px; height: 105px; background-color: #0f172a; border-radius: 0 0 2px 2px; position: relative;">
-            <div style="width: 18px; height: 6px; background-color: #f3c693; position: absolute; bottom: 0; right: -2px; border-radius: 0 2px 0 0;"></div>
-        </div>
+        <div style="width: 14px; height: 105px; background-color: #0f172a; border-radius: 0 0 2px 2px;"></div>
+        <div style="width: 14px; height: 105px; background-color: #0f172a; border-radius: 0 0 2px 2px;"></div>
     </div>
 </div>
 </div>
@@ -1091,10 +901,12 @@ if st.session_state.tela_ativa == "cotacao":
                 ]
 
                 if not resultados_fixos.empty:
+                    # Nomes das transportadoras retornadas pela API Frenet
                     transportadoras_online = [
                         item["TRANSPORTADORA"].upper() for item in cotacoes_api
                     ]
 
+                    # Filtra para manter somente as transportadoras da planilha que NÃO retornaram na API
                     resultados_filtrados = []
                     for idx, row in resultados_fixos.iterrows():
                         nome_planilha = (
@@ -1142,38 +954,20 @@ if st.session_state.tela_ativa == "cotacao":
                                 f"📞 Contato: {row['FONE']}\n"
                             )
 
-            # PASSO 4: ENVIAR PARA O WHATSAPP
+            # WHATSAPP
             if opcoes_whatsapp:
-                st.markdown(
-                    "<br><hr style='border-top: 1px dashed #e2e8f0;'><br>",
-                    unsafe_allow_html=True,
-                )
                 st.markdown(
                     '<div class="bloco-etapa" style="border-top-color:'
                     ' #25d366;">',
                     unsafe_allow_html=True,
                 )
-                st.markdown(
-                    '<div class="titulo-etapa" style="color: #16a34a;">💬 PASSO'
-                    " 3: Enviar Cotação ao Cliente</div>",
-                    unsafe_allow_html=True,
-                )
-
                 texto_opcoes = "\n".join(opcoes_whatsapp)
-
-                txt_whatsapp_volumes = (
-                    f"{num_volumes} fardos" if num_volumes > 1 else "1 fardo"
-                )
                 mensagem_vendedor = (
                     "Olá! Segue a cotação de frete para o seu pedido da *Cia do"
                     " Jeans*:\n\n"
                     f"📍 *Destino:*\n{cidade_busca} - {uf_busca}\n\n"
                     f"📦 *Volume estimado:*\n{total_pecas} peças"
-                    f" ({peso_total_calculado:.2f} kg) - Dividido em"
-                    f" {txt_whatsapp_volumes}\n\n"
-                    f"🛍️ *Embalagem:*\n{tipo_embalagem}"
-                    f" ({classificacao_tamanho}) - Medidas unitárias:"
-                    f" {comp}x{larg}x{alt} cm ({orientacao_texto})\n\n"
+                    f" ({peso_total_calculado:.2f} kg)\n\n"
                     "-----------------------------------------\n"
                     "🚚 *OPÇÕES DE ENVIO:*\n\n"
                     f"{texto_opcoes}"
@@ -1182,19 +976,17 @@ if st.session_state.tela_ativa == "cotacao":
                 )
 
                 texto_editavel = st.text_area(
-                    "Pré-visualização da Mensagem:",
+                    "Pré-visualização:",
                     value=mensagem_vendedor,
                     height=250,
                     key="txt_area_print",
                 )
-                texto_codificado = urllib.parse.quote(texto_editavel)
-                link_whatsapp = f"https://api.whatsapp.com/send?text={texto_codificado}"
+                link_whatsapp = f"https://api.whatsapp.com/send?text={urllib.parse.quote(texto_editavel)}"
 
-                # Botão do WhatsApp Moderno
                 st.markdown(
                     f"""
                     <a href="{link_whatsapp}" target="_blank" style="text-decoration: none;">
-                        <div style="background: linear-gradient(135deg, #25d366 0%, #16a34a 100%); color: white; text-align: center; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 10px 25px -5px rgba(37,211,102,0.4); cursor: pointer; margin-bottom: 12px; font-family: sans-serif; transition: all 0.2s ease;">
+                        <div style="background: linear-gradient(135deg, #25d366 0%, #16a34a 100%); color: white; text-align: center; padding: 16px; border-radius: 12px; font-weight: 700; margin-bottom: 8px;">
                             📲 ENVIAR COTAÇÃO PARA O WHATSAPP DO CLIENTE
                         </div>
                     </a>
