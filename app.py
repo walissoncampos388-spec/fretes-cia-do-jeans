@@ -858,7 +858,7 @@ if st.session_state.tela_ativa == "cotacao":
                 )
 
                 if cotacoes_api:
-                    st.markdown("### ⚡ Opções Online (J&T / Correios / Jadlog)")
+                    st.markdown("### ⚡ Cotação Online")
                     for item in cotacoes_api:
                         txt_detalhe_item = (
                             f"\n_{item['DETALHE_TRANSPORTE']}_"
@@ -922,7 +922,7 @@ if st.session_state.tela_ativa == "cotacao":
 
                     if resultados_filtrados:
                         st.markdown(
-                            "### 🏁 Transportadoras Regionais (Planilha)"
+                            "### 🏁 Outras Transportadoras"
                         )
                         for row in resultados_filtrados:
                             print_prazo = str(row["PRAZO"])
