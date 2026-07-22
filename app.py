@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 
 # Configurações do Token e CEPs de Origem
-FRENET_TOKEN = "96BCC656R0FA4R4CBERBCE2R86EF8956C1BA"
+FRENET_TOKEN = st.secrets.get("FRENET_TOKEN", "")
 FRENET_CEP_JARAGUA = "76320464"  # CEP de Origem Jaraguá - GO
 FRENET_CEP_GOIANIA = "74000000"  # CEP de Origem Goiânia - GO (Para Jadlog)
 
