@@ -939,7 +939,7 @@ if st.session_state.tela_ativa == "cotacao":
                                 # 1. Taxa fixa Transbessa por volume
                                 taxa_transbessa = 30.0 * float(num_volumes)
 
-                                # 2. Faixas de preço Carvalima baseadas no peso calculado
+                                # 2. Faixas de preço Carvalima baseadas no peso calculated
                                 if peso_total_calculado <= 10.0:
                                     val_carvalima = 84.33
                                 elif peso_total_calculado <= 30.0:
@@ -1253,18 +1253,28 @@ elif st.session_state.tela_ativa == "rastreio":
                 "### 🖥️ Painel de Rastreio em Tempo Real -"
                 f" {transportadora_rastreio}"
             )
-            st.markdown(
-                "👉 _Caso a janela abaixo fique em branco devido à segurança da"
-                " transportadora, [CLIQUE AQUI PARA ABRIR EM NOVA"
-                f" ABA]({link_rastreio_final})._"
-            )
 
-            st.components.v1.html(
-                f"""
-                <iframe src="{link_rastreio_final}" width="100%" height="600px" style="border: 2px solid #e2e8f0; border-radius: 12px; background-color: white;"></iframe>
-                """,
-                height=620,
-            )
+            # Tratamento especial para os Correios devido à proteção do CAPTCHA em iframe
+            if transportadora_rastreio == "Correios":
+                st.warning(
+                    "⚠️ Os Correios não permitem a resolução do CAPTCHA dentro de janelas integradas por motivos de segurança."
+                )
+                st.markdown(
+                    f"👉 **[CLIQUE AQUI PARA ABRIR O RASTREIO DOS CORREIOS EM NOVA ABA]({link_rastreio_final})**"
+                )
+            else:
+                st.markdown(
+                    "👉 _Caso a janela abaixo fique em branco devido à segurança da"
+                    " transportadora, [CLIQUE AQUI PARA ABRIR EM NOVA"
+                    f" ABA]({link_rastreio_final})._"
+                )
+
+                st.components.v1.html(
+                    f"""
+                    <iframe src="{link_rastreio_final}" width="100%" height="600px" style="border: 2px solid #e2e8f0; border-radius: 12px; background-color: white;"></iframe>
+                    """,
+                    height=620,
+                )
     else:
         st.info(
             "✍️ Digite o código de rastreio acima para gerar o link de envio"
