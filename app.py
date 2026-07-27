@@ -1085,7 +1085,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
 
         st.markdown(f"""
         <div class="bloco-etapa">
-            <h3 style="color: #1e3a8a; margin-top: 0;">📦 Rastreamento de Encomenda</h3>
+            <h3 style="color: #1e3a8a; margin-top: 0;">📦 Rastreamento Online</h3>
             <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega com a <b>Cia do Jeans</b>.</p>
         </div>
         """, unsafe_allow_html=True)
