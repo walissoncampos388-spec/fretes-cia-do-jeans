@@ -22,6 +22,7 @@ st.set_page_config(
 query_params = st.query_params
 rastreio_param = query_params.get("rastreio", "")
 transp_param = query_params.get("transp", "J&T Express")
+cliente_param = query_params.get("cliente", "")  # PARAMETRO NOME DO CLIENTE
 
 # CONTROLE DE NAVEGAÇÃO
 if "tela_ativa" not in st.session_state:
@@ -1083,9 +1084,11 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
         codigo_rastreio = rastreio_param
         transportadora_rastreio = transp_param
 
+        txt_boas_vindas_cli = f"Olá, <b>{cliente_param}</b>! " if cliente_param else ""
+
         st.markdown(f"""
         <div class="bloco-etapa">
-            <h3 style="color: #1e3a8a; margin-top: 0;">📦 Rastreamento Online</h3>
+            <h3 style="color: #1e3a8a; margin-top: 0;">📦 {txt_boas_vindas_cli}Rastreamento Online</h3>
             <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega com a <b>Cia do Jeans</b>.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -1166,7 +1169,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             else:
                 base_url = "https://appteste-ciadojeans.streamlit.app" # URL padrão do Streamlit Cloud de fallback
 
-            link_rastreio_personalizado = f"{base_url}/?rastreio={codigo_rastreio}&transp={urllib.parse.quote(transportadora_rastreio)}"
+            link_rastreio_personalizado = f"{base_url}/?rastreio={codigo_rastreio}&transp={urllib.parse.quote(transportadora_rastreio)}&cliente={urllib.parse.quote(nome_cliente_rastreio)}"
 
             txt_saudacao = f"Olá, *{nome_cliente_rastreio}*!" if nome_cliente_rastreio else "Olá!"
             
