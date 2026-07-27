@@ -1222,7 +1222,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             st.markdown("---")
 
         # 🖥️ PAINEL RASTREADOR PERSONALIZADO UNIVERSAL
-        st.markdown(f"### 🚚 Status de Entrega - {transportadora_rastreio}")
+        st.markdown(f"### 🚚 Enviado Por - {transportadora_rastreio}")
 
         # TRATAMENTO ESPECIAL PARA J&T EXPRESS
         if "j&t" in transportadora_rastreio.lower() or "jandt" in transportadora_rastreio.lower():
