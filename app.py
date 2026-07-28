@@ -1587,7 +1587,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA BRASPRESS (PARSER AJUSTADO PARA CAPTURAR DATA, HORA E DESCRIÇÃO)
+        # TRATAMENTO ESPECIAL PARA BRASPRESS (LIMPEZA APERFEIÇOADA DE SCRIPTS E TERMOS TÉCNICOS)
         elif "braspress" in transportadora_rastreio.lower():
             cod_braspress = "".join(filter(str.isdigit, codigo_rastreio))
             if not cod_braspress:
@@ -1624,26 +1624,37 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         if match_prev:
                             previsao_ext = match_prev.group(1)
 
-                        # Mapeamento de todas as linhas de tabela no HTML da Braspress
+                        # Extração refinada excluindo blocos com scripts, { ou termos técnicos da API
                         linhas_tr = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL | re.IGNORECASE)
                         for tr in linhas_tr:
                             tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
                             if len(tds) >= 2:
-                                # Limpeza de cada célula descartando tags HTML extras
                                 cols_limpas = [re.sub(r'<[^>]+>', ' ', td).strip() for td in tds]
                                 cols_limpas = [re.sub(r'\s+', ' ', c) for c in cols_limpas if c]
                                 
+                                text_linha_full = " ".join(cols_limpas)
+                                # Descarta código JavaScript, CSS e objetos da API
+                                if "$" in text_linha_full or "{" in text_linha_full or "StatusTrackingVo" in text_linha_full or "function" in text_linha_full:
+                                    continue
+
                                 if cols_limpas:
                                     primeira_col = cols_limpas[0]
-                                    # Verifica se a primeira coluna possui formato de Data/Hora
                                     if re.search(r'\d{2}/\d{2}/\d{4}', primeira_col):
                                         detalhes_evento = " - ".join(cols_limpas[1:]) if len(cols_limpas) > 1 else status_ext
                                         historico_ocorrencias.append(f"<b>{primeira_col}</b> - {detalhes_evento}")
 
+                        # Captura alternativa limpa por Regex focando nas ocorrências em caixa alta
+                        if not historico_ocorrencias:
+                            ocorrencias_fiel = re.findall(r'(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2})\s+([A-Z\s\-\–ÁÉÍÓÚÂÊÔÃÕÇ]+)', html_text)
+                            for dt, desc in ocorrencias_fiel:
+                                desc_pura = desc.strip()
+                                if len(desc_pura) > 3 and not any(f"<b>{dt}</b>" in item for item in historico_ocorrencias):
+                                    historico_ocorrencias.append(f"<b>{dt}</b> - {desc_pura}")
+
                 except Exception:
                     pass
 
-                # Fallback secundário para raspar caso a tabela principal não estivesse visível
+                # Fallback via portal secundário
                 if not historico_ocorrencias:
                     try:
                         resp_alt = requests.get(f"https://rastreadordeencomendas.com/result.php?idcod={cod_braspress}", headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
@@ -1654,7 +1665,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 if len(colunas) >= 2:
                                     txt_data = re.sub(r'<[^>]+>', '', colunas[0]).strip()
                                     txt_desc = re.sub(r'<[^>]+>', '', colunas[1]).strip()
-                                    if txt_data and txt_desc:
+                                    if txt_data and txt_desc and "$" not in txt_desc and "{" not in txt_desc:
                                         historico_ocorrencias.append(f"<b>{txt_data}</b> - {txt_desc}")
                     except Exception:
                         pass
@@ -1662,7 +1673,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             if not historico_ocorrencias:
                 historico_ocorrencias = [
                     f"<b>NF {cod_braspress}:</b> Pedido registrado no sistema da Braspress.",
-                    f"<b>Status Atual:</b> {status_ext}. Acompanhe as movimentações no portal oficial da transportadora."
+                    f"<b>Status Atual:</b> {status_ext}. Acompanhe os detalhes no portal oficial da transportadora."
                 ]
 
             html_historico = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_ocorrencias])
