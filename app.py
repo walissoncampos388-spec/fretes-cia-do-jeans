@@ -1261,39 +1261,51 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA CORREIOS (PADRONIZADO BRASPRESS)
+        # TRATAMENTO ESPECIAL PARA CORREIOS (PADRONIZADO BRASPRESS COM DADOS REAIS)
         elif "correio" in transportadora_rastreio.lower():
             cod_correios = codigo_rastreio.strip().upper()
             url_correios_site = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod_correios}"
             url_api_hub = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
 
-            status_correios = "Objeto Postado / Em Trânsito"
-            previsao_correios = "Acompanhar no Portal"
+            status_correios = "Objeto Postado"
             tipo_entrega_correios = "PAC / SEDEX"
             historico_correios = []
 
-            with st.spinner(f"🔍 Consultando código {cod_correios} nos Correios..."):
+            with st.spinner(f"🔍 Consultando linha do tempo do código {cod_correios} nos Correios..."):
                 try:
-                    res = requests.get(url_api_hub, timeout=5)
+                    res = requests.get(url_api_hub, timeout=6)
                     if res.status_code == 200:
                         dados = res.json()
+                        
+                        servico_detectado = dados.get("servico", "")
+                        if servico_detectado:
+                            tipo_entrega_correios = str(servico_detectado).upper()
+
                         eventos = dados.get("eventos", [])
                         if eventos:
-                            status_correios = eventos[0].get("status")
+                            primeiro_evento = eventos[0]
+                            st_atual = primeiro_evento.get("status", "")
+                            sub_st = primeiro_evento.get("subStatus", [])
+                            txt_sub_atual = f" ({sub_st[0]})" if sub_st else ""
+                            data_atual = primeiro_evento.get("data", "")
+                            hora_atual = primeiro_evento.get("hora", "")
+                            
+                            status_correios = f"{st_atual}{txt_sub_atual} em {data_atual} {hora_atual}".strip()
+
                             for ev in eventos:
                                 data_ev = ev.get("data", "")
                                 hora_ev = ev.get("hora", "")
                                 st_ev = ev.get("status", "")
                                 sub_ev = ev.get("subStatus", [])
-                                txt_sub = f" ({sub_ev[0]})" if sub_ev else ""
-                                historico_correios.append(f"<b>{data_ev} {hora_ev}</b> - {st_ev}{txt_sub}")
+                                txt_sub = f" - {sub_ev[0]}" if sub_ev else ""
+                                historico_correios.append(f"<b>{data_ev} {hora_ev}</b>: {st_ev}{txt_sub}")
                 except Exception:
                     pass
 
             if not historico_correios:
                 historico_correios = [
                     f"<b>{cod_correios}:</b> Pedido registrado no sistema dos Correios.",
-                    "<b>Status:</b> Acompanhe as movimentações no portal oficial da transportadora."
+                    "<b>Status:</b> Acompanhe todas as movimentações no portal oficial da transportadora."
                 ]
 
             html_historico_correios = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_correios])
@@ -1314,10 +1326,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
                         <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 15px; color: #1e3a8a;">{status_correios}</strong>
-                    </div>
-                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Previsão de Entrega</span>
-                        <strong style="font-size: 15px; color: #0f172a;">{previsao_correios}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
                         <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Entrega</span>
@@ -1347,18 +1355,61 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA JADLOG (PADRONIZADO BRASPRESS)
+        # TRATAMENTO ESPECIAL PARA JADLOG (PADRONIZADO BRASPRESS COM DADOS REAIS)
         elif "jadlog" in transportadora_rastreio.lower():
             cod_jadlog = codigo_rastreio.strip()
+            doc_limpo = "".join(filter(str.isdigit, st.session_state.get("campo_doc_estavel", "")))
+            
             url_jadlog_site = f"https://www.jadlog.com.br/jadlog/tracking?cte={cod_jadlog}"
+            url_jadlog_api = "https://www.jadlog.com.br/jadlog/shipment/tracking"
 
             status_jadlog = "Em Trânsito / Transferência"
-            previsao_jadlog = "Acompanhar no Portal"
-            tipo_entrega_jadlog = "Package / Com"
-            historico_jadlog = [
-                f"<b>{cod_jadlog}:</b> Encomenda registrada na base de dados da Jadlog.",
-                "<b>Status:</b> Acompanhe as movimentações no portal oficial da transportadora."
-            ]
+            tipo_entrega_jadlog = "Jadlog Package / Com"
+            historico_jadlog = []
+
+            headers_jadlog = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Content-Type": "application/json"
+            }
+
+            payload_jadlog = {
+                "cte": cod_jadlog,
+                "cnpj": doc_limpo if doc_limpo else ""
+            }
+
+            with st.spinner(f"🔍 Consultando linha do tempo do remessa/CPF {cod_jadlog} na Jadlog..."):
+                try:
+                    res_j = requests.post(url_jadlog_api, json=payload_jadlog, headers=headers_jadlog, timeout=6)
+                    if res_j.status_code == 200:
+                        dados_j = res_j.json()
+                        eventos_j = dados_j.get("tracking", {}).get("eventos", [])
+                        servico_j = dados_j.get("tracking", {}).get("modalidade", "")
+
+                        if servico_j:
+                            tipo_entrega_jadlog = str(servico_j).upper()
+
+                        if eventos_j:
+                            primeiro_ev = eventos_j[0]
+                            dt_j = primeiro_ev.get("data", "")
+                            st_j = primeiro_ev.get("status", "")
+                            un_j = primeiro_ev.get("unidade", "")
+                            txt_un_j = f" ({un_j})" if un_j else ""
+                            status_jadlog = f"{st_j}{txt_un_j} em {dt_j}".strip()
+
+                            for ev in eventos_j:
+                                data_e = ev.get("data", "")
+                                st_e = ev.get("status", "")
+                                un_e = ev.get("unidade", "")
+                                txt_un = f" - {un_e}" if un_e else ""
+                                historico_jadlog.append(f"<b>{data_e}</b>: {st_e}{txt_un}")
+                except Exception:
+                    pass
+
+            if not historico_jadlog:
+                historico_jadlog = [
+                    f"<b>{cod_jadlog}:</b> Encomenda registrada na base de dados da Jadlog.",
+                    "<b>Status:</b> Acompanhe todas as movimentações no portal oficial da transportadora."
+                ]
 
             html_historico_jadlog = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_jadlog])
 
@@ -1378,10 +1429,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
                         <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 15px; color: #1e3a8a;">{status_jadlog}</strong>
-                    </div>
-                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Previsão de Entrega</span>
-                        <strong style="font-size: 15px; color: #0f172a;">{previsao_jadlog}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
                         <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Entrega</span>
