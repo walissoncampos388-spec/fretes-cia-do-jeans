@@ -1308,7 +1308,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         if resp_alt.status_code == 200 and "<tr" in resp_alt.text:
                             linhas_tr = re.findall(r'<tr[^>]*>(.*?)</tr>', resp_alt.text, re.DOTALL)
                             for tr in linhas_tr:
-                                colunas = re.findall(r'<td[^>]*>(.*?)td>', tr, re.DOTALL)
+                                colunas = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
                                 if len(colunas) >= 2:
                                     txt_data = re.sub(r'<[^>]+>', '', colunas[0]).strip()
                                     txt_desc = re.sub(r'<[^>]+>', '', colunas[1]).strip()
@@ -1587,7 +1587,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA BRASPRESS (LINHA DO TEMPO REVERTIDA E COMPLETA)
+        # TRATAMENTO ESPECIAL PARA BRASPRESS (PARSER AJUSTADO E PRECISO DO HISTÓRICO)
         elif "braspress" in transportadora_rastreio.lower():
             cod_braspress = "".join(filter(str.isdigit, codigo_rastreio))
             if not cod_braspress:
@@ -1624,23 +1624,24 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         if match_prev:
                             previsao_ext = match_prev.group(1)
 
-                        # Captura todos os blocos de ocorrência/linha do tempo
-                        ocorrencias_raw = re.findall(r"(\d{2}/\d{2}/\d{4}\s*(?:\d{2}:\d{2})?)\s*[-:]?\s*([^<]+)", html_text)
-                        for data_hora, evento in ocorrencias_raw:
-                            ev_clean = evento.strip()
-                            if ev_clean and not any(ev_clean in h for h in historico_ocorrencias):
-                                historico_ocorrencias.append(f"<b>{data_hora.strip()}</b> - {ev_clean}")
+                        # Extração limpa dos eventos da tabela do portal Braspress
+                        linhas_tabela = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL | re.IGNORECASE)
+                        for tr in linhas_tabela:
+                            cols = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
+                            if len(cols) >= 2:
+                                t_data = re.sub(r'<[^>]+>', '', cols[0]).strip()
+                                t_desc = re.sub(r'<[^>]+>', '', cols[1]).strip()
+                                # Filtra somente linhas que contêm datas válidas (ex: DD/MM/AAAA)
+                                if t_data and t_desc and re.search(r'\d{2}/\d{2}/\d{4}', t_data):
+                                    historico_ocorrencias.append(f"<b>{t_data}</b> - {t_desc}")
 
-                        # Fallback parsing alternativo na tabela HTML
+                        # Fallback por regex genérico se a tabela principal não for mapeada
                         if not historico_ocorrencias:
-                            linhas_tabela = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL | re.IGNORECASE)
-                            for tr in linhas_tabela:
-                                cols = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
-                                if len(cols) >= 2:
-                                    t_data = re.sub(r'<[^>]+>', '', cols[0]).strip()
-                                    t_desc = re.sub(r'<[^>]+>', '', cols[1]).strip()
-                                    if t_data and t_desc and ("/" in t_data or ":" in t_data):
-                                        historico_ocorrencias.append(f"<b>{t_data}</b> - {t_desc}")
+                            ocorrencias_raw = re.findall(r'(\d{2}/\d{2}/\d{4}(?:\s+\d{2}:\d{2})?)\s*[-:]?\s*([^<\n\r]+)', html_text)
+                            for data_hora, evento in ocorrencias_raw:
+                                ev_clean = evento.strip()
+                                if ev_clean and len(ev_clean) > 3 and not any(ev_clean in h for h in historico_ocorrencias):
+                                    historico_ocorrencias.append(f"<b>{data_hora.strip()}</b> - {ev_clean}")
 
                 except Exception:
                     pass
@@ -1648,7 +1649,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             if not historico_ocorrencias:
                 historico_ocorrencias = [
                     f"<b>NF {cod_braspress}:</b> Pedido registrado no sistema da Braspress.",
-                    "<b>Status Atual:</b> Acompanhe todas as atualizações no portal oficial da transportadora."
+                    "<b>Status Atual:</b> Acompanhe as movimentações no portal oficial da transportadora."
                 ]
 
             html_historico = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_ocorrencias])
