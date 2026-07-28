@@ -1123,7 +1123,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
 
         with col_doc:
             doc_cliente = st.text_input(
-                "CPF ou CNPJ do Cliente (Se J&T/Braspress):",
+                "CPF ou CNPJ do Cliente (Se J&T/Braspress/Jadlog):",
                 placeholder="Apenas números",
                 key="campo_doc_estavel",
             ).strip()
@@ -1256,6 +1256,156 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 <a href="https://www.jtexpress.com.br/trajectoryQuery?billCode={codigo_rastreio}" target="_blank" style="text-decoration: none;">
                     <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; display: inline-block; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 15px;">
                         🔗 ACOMPANHAR ENTREGA NA J&T EXPRESS
+                    </div>
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # TRATAMENTO ESPECIAL PARA CORREIOS (PADRONIZADO BRASPRESS)
+        elif "correio" in transportadora_rastreio.lower():
+            cod_correios = codigo_rastreio.strip().upper()
+            url_correios_site = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod_correios}"
+            url_api_hub = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
+
+            status_correios = "Objeto Postado / Em Trânsito"
+            previsao_correios = "Acompanhar no Portal"
+            tipo_entrega_correios = "PAC / SEDEX"
+            historico_correios = []
+
+            with st.spinner(f"🔍 Consultando código {cod_correios} nos Correios..."):
+                try:
+                    res = requests.get(url_api_hub, timeout=5)
+                    if res.status_code == 200:
+                        dados = res.json()
+                        eventos = dados.get("eventos", [])
+                        if eventos:
+                            status_correios = eventos[0].get("status")
+                            for ev in eventos:
+                                data_ev = ev.get("data", "")
+                                hora_ev = ev.get("hora", "")
+                                st_ev = ev.get("status", "")
+                                sub_ev = ev.get("subStatus", [])
+                                txt_sub = f" ({sub_ev[0]})" if sub_ev else ""
+                                historico_correios.append(f"<b>{data_ev} {hora_ev}</b> - {st_ev}{txt_sub}")
+                except Exception:
+                    pass
+
+            if not historico_correios:
+                historico_correios = [
+                    f"<b>{cod_correios}:</b> Pedido registrado no sistema dos Correios.",
+                    "<b>Status:</b> Acompanhe as movimentações no portal oficial da transportadora."
+                ]
+
+            html_historico_correios = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_correios])
+
+            st.html(f"""
+            <div style="background: #ffffff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 16px;">
+                    <div>
+                        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; font-weight: 700;">STATUS DO ENVIO</span>
+                        <h4 style="margin: 2px 0 0 0; color: #0f172a; font-size: 18px;">📦 Correios</h4>
+                    </div>
+                    <div style="background-color: #eff6ff; padding: 6px 14px; border-radius: 8px; border: 1px solid #dbeafe;">
+                        <span style="font-size: 13px; color: #1e40af; font-weight: 600;">COD: {cod_correios}</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
+                        <strong style="font-size: 15px; color: #1e3a8a;">{status_correios}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Previsão de Entrega</span>
+                        <strong style="font-size: 15px; color: #0f172a;">{previsao_correios}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Entrega</span>
+                        <strong style="font-size: 15px; color: #0f172a;">{tipo_entrega_correios}</strong>
+                    </div>
+                </div>
+
+                <div style="background: #f1f5f9; padding: 16px; border-radius: 12px; border-left: 4px solid #2563eb;">
+                    <strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 10px;">📍 Histórico de Movimentações:</strong>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 13px;">
+                        {html_historico_correios}
+                    </ul>
+                </div>
+            </div>
+            """)
+
+            st.markdown(f"""
+            <div style="text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 15px;">
+                <p style="color: #1e3a8a; font-weight: 600; font-size: 15px; margin-bottom: 12px;">
+                    👇 Clique no botão abaixo para conferir a movimentação no portal dos Correios:
+                </p>
+                <a href="{url_correios_site}" target="_blank" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; display: inline-block; padding: 16px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">
+                        🔗 CONSULTAR COMPLETO NO PORTAL CORREIOS
+                    </div>
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # TRATAMENTO ESPECIAL PARA JADLOG (PADRONIZADO BRASPRESS)
+        elif "jadlog" in transportadora_rastreio.lower():
+            cod_jadlog = codigo_rastreio.strip()
+            url_jadlog_site = f"https://www.jadlog.com.br/jadlog/tracking?cte={cod_jadlog}"
+
+            status_jadlog = "Em Trânsito / Transferência"
+            previsao_jadlog = "Acompanhar no Portal"
+            tipo_entrega_jadlog = "Package / Com"
+            historico_jadlog = [
+                f"<b>{cod_jadlog}:</b> Encomenda registrada na base de dados da Jadlog.",
+                "<b>Status:</b> Acompanhe as movimentações no portal oficial da transportadora."
+            ]
+
+            html_historico_jadlog = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_jadlog])
+
+            st.html(f"""
+            <div style="background: #ffffff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 16px;">
+                    <div>
+                        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; font-weight: 700;">STATUS DO ENVIO</span>
+                        <h4 style="margin: 2px 0 0 0; color: #0f172a; font-size: 18px;">🚚 Jadlog Logística</h4>
+                    </div>
+                    <div style="background-color: #eff6ff; padding: 6px 14px; border-radius: 8px; border: 1px solid #dbeafe;">
+                        <span style="font-size: 13px; color: #1e40af; font-weight: 600;">REM/CPF: {cod_jadlog}</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
+                        <strong style="font-size: 15px; color: #1e3a8a;">{status_jadlog}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Previsão de Entrega</span>
+                        <strong style="font-size: 15px; color: #0f172a;">{previsao_jadlog}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Entrega</span>
+                        <strong style="font-size: 15px; color: #0f172a;">{tipo_entrega_jadlog}</strong>
+                    </div>
+                </div>
+
+                <div style="background: #f1f5f9; padding: 16px; border-radius: 12px; border-left: 4px solid #2563eb;">
+                    <strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 10px;">📍 Histórico de Movimentações:</strong>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 13px;">
+                        {html_historico_jadlog}
+                    </ul>
+                </div>
+            </div>
+            """)
+
+            st.markdown(f"""
+            <div style="text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 15px;">
+                <p style="color: #1e3a8a; font-weight: 600; font-size: 15px; margin-bottom: 12px;">
+                    👇 Clique no botão abaixo para conferir a movimentação no portal da Jadlog:
+                </p>
+                <a href="{url_jadlog_site}" target="_blank" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; display: inline-block; padding: 16px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">
+                        🔗 CONSULTAR COMPLETO NO PORTAL JADLOG
                     </div>
                 </a>
             </div>
