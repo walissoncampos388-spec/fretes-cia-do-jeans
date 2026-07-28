@@ -1278,7 +1278,19 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         dados = res.json()
                         eventos = dados.get("eventos", [])
                         if eventos:
-                            # Preenche TODO o histórico de movimentação
+                            primeiro_ev = eventos[0]
+                            st_nome = primeiro_ev.get("status", "")
+                            st_local = primeiro_ev.get("local", "")
+                            st_data = primeiro_ev.get("data", "")
+                            st_hora = primeiro_ev.get("hora", "")
+                            
+                            sub_ev_str = ""
+                            if primeiro_ev.get("subStatus"):
+                                sub_ev_str = f" - {primeiro_ev.get('subStatus')[0]}"
+                                
+                            status_correios = f"{st_nome}{sub_ev_str} ({st_data} às {st_hora})"
+                            
+                            # Extrai toda a linha do tempo retornada
                             for ev in eventos:
                                 d_ev = ev.get("data", "")
                                 h_ev = ev.get("hora", "")
@@ -1287,9 +1299,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 sub_txt = f" - {ev.get('subStatus')[0]}" if ev.get("subStatus") else ""
                                 loc_txt = f" [{l_ev}]" if l_ev else ""
                                 historico_correios.append(f"<b>{d_ev} {h_ev}</b>: {s_ev}{sub_txt}{loc_txt}")
-
-                            # Define o Status Atual estritamente com a ÚLTIMA atualização registrada
-                            status_correios = historico_correios[0].replace("<b>", "").replace("</b>", "")
                 except Exception:
                     pass
 
@@ -1315,7 +1324,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Última Atualização (Status)</span>
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 14px; color: #1e3a8a;">{status_correios}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
@@ -1372,16 +1381,20 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                             tipo_entrega_jadlog = f"Jadlog {servico_j.upper()}"
 
                         if eventos_j:
-                            # Preenche TODO o histórico de movimentação
+                            primeiro_ev = eventos_j[0]
+                            dt_j = primeiro_ev.get("data", "")
+                            st_j = primeiro_ev.get("status", "")
+                            un_j = primeiro_ev.get("unidade", "")
+                            txt_un_j = f" - {un_j}" if un_j else ""
+                            status_jadlog = f"{st_j}{txt_un_j} ({dt_j})"
+
+                            # Monta toda a linha do tempo fornecida pela Jadlog
                             for ev in eventos_j:
                                 data_e = ev.get("data", "")
                                 st_e = ev.get("status", "")
                                 un_e = ev.get("unidade", "")
                                 txt_un = f" [{un_e}]" if un_e else ""
                                 historico_jadlog.append(f"<b>{data_e}</b>: {st_e}{txt_un}")
-
-                            # Define o Status Atual estritamente com a ÚLTIMA atualização registrada
-                            status_jadlog = historico_jadlog[0].replace("<b>", "").replace("</b>", "")
                 except Exception:
                     pass
 
@@ -1407,7 +1420,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Última Atualização (Status)</span>
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 14px; color: #1e3a8a;">{status_jadlog}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
@@ -1463,7 +1476,8 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         dados = res.json()
                         eventos = dados.get("eventos", [])
                         if eventos:
-                            # Preenche TODO o histórico de movimentação
+                            status_azul = eventos[0].get("status")
+                            # Extrai toda a linha do tempo retornada para Azul Cargo
                             for ev in eventos:
                                 data_ev = ev.get("data", "")
                                 hora_ev = ev.get("hora", "")
@@ -1471,9 +1485,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 sub_ev = ev.get("subStatus", [])
                                 txt_sub = f" ({sub_ev[0]})" if sub_ev else ""
                                 historico_azul.append(f"<b>{data_ev} {hora_ev}</b> - {st_ev}{txt_sub}")
-
-                            # Define o Status Atual estritamente com a ÚLTIMA atualização registrada
-                            status_azul = historico_azul[0].replace("<b>", "").replace("</b>", "")
                 except Exception:
                     pass
 
@@ -1503,7 +1514,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Última Atualização (Status)</span>
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 15px; color: {cor_status};">{status_azul}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
@@ -1543,7 +1554,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA BRASPRESS
+        # TRATAMENTO ESPECIAL PARA BRASPRESS (LINHA DO TEMPO COMPLETA E LIMPA DE SCRIPTS)
         elif "braspress" in transportadora_rastreio.lower():
             cod_braspress = "".join(filter(str.isdigit, codigo_rastreio))
             if not cod_braspress:
@@ -1570,11 +1581,17 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                     if res_bp.status_code == 200:
                         html_text = res_bp.text
                         
+                        match_status = re.search(r"Status\s*</th>\s*<td[^>]*>(.*?)</td>", html_text, re.IGNORECASE | re.DOTALL)
+                        if match_status:
+                            status_limpo = re.sub(r'<[^>]+>', '', match_status.group(1)).strip()
+                            if status_limpo and not "$" in status_limpo and not "{" in status_limpo:
+                                status_ext = status_limpo
+
                         match_prev = re.search(r"Previsão de Entrega\s*</th>\s*<td[^>]*>(\d{2}/\d{2}/\d{4})</td>", html_text, re.IGNORECASE)
                         if match_prev:
                             previsao_ext = match_prev.group(1)
 
-                        # Extrai todas as etapas reais da linha do tempo
+                        # Extrai rigorosamente todas as etapas reais da linha do tempo da Braspress
                         linhas_tr = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL | re.IGNORECASE)
                         for tr in linhas_tr:
                             tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
@@ -1583,6 +1600,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 cols_limpas = [re.sub(r'\s+', ' ', c) for c in cols_limpas if c]
                                 
                                 text_linha_full = " ".join(cols_limpas)
+                                # Descarta linhas contendo scripts, objetos internos do JS ou estilizações
                                 if "$" in text_linha_full or "{" in text_linha_full or "StatusTrackingVo" in text_linha_full or "function" in text_linha_full:
                                     continue
 
@@ -1591,10 +1609,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                     if re.search(r'\d{2}/\d{2}/\d{4}', primeira_col):
                                         detalhes_evento = " - ".join(cols_limpas[1:])
                                         historico_ocorrencias.append(f"<b>{primeira_col}</b> - {detalhes_evento}")
-
-                        # Define o Status Atual estritamente com a ÚLTIMA atualização registrada
-                        if historico_ocorrencias:
-                            status_ext = historico_ocorrencias[0].replace("<b>", "").replace("</b>", "")
 
                 except Exception:
                     pass
@@ -1621,7 +1635,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
-                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Última Atualização (Status)</span>
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
                         <strong style="font-size: 15px; color: #1e3a8a;">{status_ext}</strong>
                     </div>
                     <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
