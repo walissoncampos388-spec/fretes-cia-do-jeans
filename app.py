@@ -1085,8 +1085,8 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
 
         st.markdown(f"""
         <div class="bloco-etapa">
-            <h3 style="color: #1e3a8a; margin-top: 0;">📦 {txt_boas_vindas_cli}Gratidão pela compra💙</h3>
-            <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega <b>Cia do Jeans</b>.</p>
+            <h3 style="color: #1e3a8a; margin-top: 0;">📦 {txt_boas_vindas_cli}Rastreamento Online</h3>
+            <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega com a <b>Cia do Jeans</b>.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1166,7 +1166,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             txt_saudacao = f"Olá, *{nome_cliente_rastreio}*!" if nome_cliente_rastreio else "Olá!"
             
             mensagem_rastreio = (
-                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já foi enviado! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
                 f"🚚 *Transportadora:* {transportadora_rastreio}\n"
                 f"📦 *Código de Rastreio:* `{codigo_rastreio}`\n\n"
                 "🔗 *Clique no link abaixo para acompanhar seu envio em tempo real:*\n"
@@ -1290,6 +1290,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 
                             status_correios = f"{st_nome}{sub_ev_str} ({st_data} às {st_hora})"
                             
+                            # Extrai toda a linha do tempo retornada
                             for ev in eventos:
                                 d_ev = ev.get("data", "")
                                 h_ev = ev.get("hora", "")
@@ -1387,6 +1388,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                             txt_un_j = f" - {un_j}" if un_j else ""
                             status_jadlog = f"{st_j}{txt_un_j} ({dt_j})"
 
+                            # Monta toda a linha do tempo fornecida pela Jadlog
                             for ev in eventos_j:
                                 data_e = ev.get("data", "")
                                 st_e = ev.get("status", "")
@@ -1475,6 +1477,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         eventos = dados.get("eventos", [])
                         if eventos:
                             status_azul = eventos[0].get("status")
+                            # Extrai toda a linha do tempo retornada para Azul Cargo
                             for ev in eventos:
                                 data_ev = ev.get("data", "")
                                 hora_ev = ev.get("hora", "")
@@ -1551,7 +1554,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA BRASPRESS (SEM FALLBACK DE SITES TERCEIROS)
+        # TRATAMENTO ESPECIAL PARA BRASPRESS (LINHA DO TEMPO COMPLETA E LIMPA DE SCRIPTS)
         elif "braspress" in transportadora_rastreio.lower():
             cod_braspress = "".join(filter(str.isdigit, codigo_rastreio))
             if not cod_braspress:
@@ -1572,7 +1575,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             tipo_entrega_ext = "Rodoviário / Carga"
             historico_ocorrencias = []
 
-            with st.spinner("🔍 Consultando servidor da Braspress..."):
+            with st.spinner("🔍 Consultando linha do tempo na Braspress..."):
                 try:
                     res_bp = requests.get(url_braspress_tracking, headers=headers_braspress, timeout=6)
                     if res_bp.status_code == 200:
@@ -1588,7 +1591,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                         if match_prev:
                             previsao_ext = match_prev.group(1)
 
-                        # Busca estritamente linhas de tabela que possuam datas válidas
+                        # Extrai rigorosamente todas as etapas reais da linha do tempo da Braspress
                         linhas_tr = re.findall(r'<tr[^>]*>(.*?)</tr>', html_text, re.DOTALL | re.IGNORECASE)
                         for tr in linhas_tr:
                             tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
@@ -1597,6 +1600,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                                 cols_limpas = [re.sub(r'\s+', ' ', c) for c in cols_limpas if c]
                                 
                                 text_linha_full = " ".join(cols_limpas)
+                                # Descarta linhas contendo scripts, objetos internos do JS ou estilizações
                                 if "$" in text_linha_full or "{" in text_linha_full or "StatusTrackingVo" in text_linha_full or "function" in text_linha_full:
                                     continue
 
@@ -1609,11 +1613,10 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 except Exception:
                     pass
 
-            # Caso o portal da Braspress não retorne tabela pública (sem autenticação), exibe aviso limpo em vez de dados falsos
             if not historico_ocorrencias:
                 historico_ocorrencias = [
                     f"<b>Nota Fiscal Nº {cod_braspress}:</b> Carga despachada com a Braspress.",
-                    "<b>Acompanhamento Completo:</b> Para visualizar a linha do tempo detalhada, clique no botão de consulta oficial abaixo."
+                    "<b>Acompanhamento Completo:</b> Para visualizar a linha do tempo detalhada em tempo real, clique no botão de consulta oficial abaixo."
                 ]
 
             html_historico = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_ocorrencias])
