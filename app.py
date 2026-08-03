@@ -1432,7 +1432,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 </a>
             </div>
             """, unsafe_allow_html=True)
-            )
         # TRATAMENTO ESPECIAL PARA JADLOG
         elif "jadlog" in transportadora_rastreio.lower():
             cod_jadlog = codigo_rastreio.strip()
