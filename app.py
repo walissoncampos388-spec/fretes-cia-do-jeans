@@ -469,55 +469,37 @@ def carregar_e_limpar_dados():
 df_fretes_fixos = carregar_e_limpar_dados()
 
 
-def buscar_e_carregar_logo():
-    possiveis_nomes = [
-        "Logo_unicammodas.PNG",
-        "Logo_unicammodas.png",
-        "Logo_unicammodas.jpg",
-        "Logo_unicammodas.jpeg",
-        "logo_unicammodas.png",
-        "logo_unicammodas.PNG",
-        "logo.png",
-        "logo.PNG",
-        "assets/Logo_unicammodas.PNG",
-        "assets/Logo_unicammodas.png",
-    ]
-
-    for caminho in possiveis_nomes:
-        if os.path.exists(caminho):
-            try:
-                with open(caminho, "rb") as image_file:
-                    return base64.b64encode(image_file.read()).decode()
-            except Exception:
-                pass
+def buscar_e_converter_logo():
+    # Busca dinamicamente os nomes possíveis na raiz
+    for arquivo in os.listdir("."):
+        if arquivo.lower().startswith("logo_unicammodas") or arquivo.lower().startswith("logo"):
+            if arquivo.lower().endswith((".png", ".jpg", ".jpeg")):
+                try:
+                    with open(arquivo, "rb") as image_file:
+                        return base64.b64encode(image_file.read()).decode()
+                except Exception:
+                    pass
     return ""
 
 
-img_base64 = buscar_e_carregar_logo()
+img_b64 = buscar_e_converter_logo()
 
-# Topo da Aplicação (Carregamento Direto e Seguro da Logo)
-import os
-
-if os.path.exists("Logo_unicammodas.PNG"):
-    st.image("Logo_unicammodas.PNG", use_container_width=True)
-    st.markdown(
-        """
-        <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 8px; border-radius: 12px; text-align: center; margin-bottom: 24px; margin-top: -10px;'>
-            <p style='color: #93c5fd; font-weight: 600; margin: 0; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+if img_b64:
+    header_html = f"""
+    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 18px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+        <img src="data:image/png;base64,{img_b64}" style="display: block; margin: 0 auto; width: 100%; max-width: 650px; height: auto; max-height: 220px; object-fit: contain;">
+        <p style='color: #93c5fd; font-weight: 600; margin-top: 10px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+    </div>
+    """
 else:
-    st.markdown(
-        """
-        <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
-            <h1 style='color: #ffffff; margin: 0; font-size: 2.2rem; font-weight: 800;'>UNICAM MODAS</h1>
-            <p style='color: #93c5fd; font-weight: 600; margin-top: 4px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    header_html = """
+    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 28px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+        <h1 style='color: #ffffff; margin: 0; font-size: 2.2rem; font-weight: 800;'>UNICAM MODAS</h1>
+        <p style='color: #93c5fd; font-weight: 600; margin-top: 6px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+    </div>
+    """
+
+st.markdown(header_html, unsafe_allow_html=True)
 
 # SE FOR ACESSO DE CLIENTE DIRETO VIA LINK, OCULTA OS BOTOES DE ALTERNAR TELA
 if not rastreio_param:
