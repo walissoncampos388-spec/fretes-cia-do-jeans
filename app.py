@@ -6,10 +6,15 @@ import pandas as pd
 import requests
 import streamlit as st
 
-# Configurações do Token e CEPs de Origem
+# Configurações de Tokens e Chaves em Segredo via Secrets
 FRENET_TOKEN = st.secrets.get("FRENET_TOKEN", "")
 FRENET_CEP_JARAGUA = "76320464"  # CEP de Origem Jaraguá - GO
 FRENET_CEP_GOIANIA = "74000000"  # CEP de Origem Goiânia - GO (Para Jadlog)
+
+# Credenciais Oficiais CWS Correios (Protegidas)
+CWS_USER = st.secrets.get("CORREIOS_USUARIO", "")
+CWS_CARTAO = st.secrets.get("CORREIOS_CARTAO", "")
+CWS_ACCESS_KEY = st.secrets.get("CORREIOS_ACCESS_KEY", "")
 
 # 1. Configuração de Design da Página
 st.set_page_config(
@@ -1266,7 +1271,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA CORREIOS
+        # TRATAMENTO ESPECIAL PARA CORREIOS (INTEGRAÇÃO API CWS OFICIAL CORREIOS PROTEGIDA)
         elif "correio" in transportadora_rastreio.lower():
             cod_correios = codigo_rastreio.strip().upper()
             url_correios_site = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod_correios}"
@@ -1276,62 +1281,92 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             historico_correios = []
 
             with st.spinner(f"🔍 Buscando rastreio real nos Correios para {cod_correios}..."):
-                # TENTA API 1 (RastreioBot / Linketrack direta v2)
                 try:
-                    url_api1 = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
-                    res = requests.get(url_api1, timeout=5)
-                    if res.status_code == 200:
-                        dados = res.json()
-                        eventos = dados.get("eventos", [])
-                        if eventos:
-                            primeiro_ev = eventos[0]
-                            st_nome = primeiro_ev.get("status", "")
-                            st_local = primeiro_ev.get("local", "")
-                            st_data = primeiro_ev.get("data", "")
-                            st_hora = primeiro_ev.get("hora", "")
-                            
-                            sub_ev_str = ""
-                            if primeiro_ev.get("subStatus"):
-                                sub_ev_str = f" - {primeiro_ev.get('subStatus')[0]}"
-                                
-                            loc_str = f" ({st_local})" if st_local else ""
-                            status_correios = f"{st_nome}{sub_ev_str}{loc_str}"
-                            
-                            for ev in eventos:
-                                d_ev = ev.get("data", "")
-                                h_ev = ev.get("hora", "")
-                                s_ev = ev.get("status", "")
-                                l_ev = ev.get("local", "")
-                                sub_txt = f" - {ev.get('subStatus')[0]}" if ev.get("subStatus") else ""
-                                loc_txt = f" [{l_ev}]" if l_ev else ""
-                                historico_correios.append(f"<b>{d_ev} {h_ev}</b>: {s_ev}{sub_txt}{loc_txt}")
+                    # 1. Autentica no portal CWS dos Correios para gerar o Token Bearer
+                    if CWS_USER and CWS_ACCESS_KEY:
+                        url_token = "https://api.correios.com.br/v1/autentica/cartaopostagem"
+                        auth_body = {"numero": CWS_CARTAO} if CWS_CARTAO else {}
+                        headers_auth = {
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {CWS_ACCESS_KEY}"
+                        }
+
+                        res_auth = requests.post(
+                            url_token,
+                            json=auth_body,
+                            headers=headers_auth,
+                            auth=(CWS_USER, CWS_ACCESS_KEY),
+                            timeout=6
+                        )
+
+                        token_bearer = None
+                        if res_auth.status_code in [200, 201]:
+                            token_bearer = res_auth.json().get("token")
+
+                        # 2. Faz a consulta oficial do objeto com o Token obtido
+                        if token_bearer:
+                            url_rastreio = f"https://api.correios.com.br/srorasteio/v1/objetos/{cod_correios}?resultado=T"
+                            headers_rastreio = {
+                                "Authorization": f"Bearer {token_bearer}",
+                                "Accept": "application/json"
+                            }
+                            res_obj = requests.get(url_rastreio, headers=headers_rastreio, timeout=6)
+                            if res_obj.status_code == 200:
+                                dados_obj = res_obj.json()
+                                objetos = dados_obj.get("objetos", [])
+                                if objetos:
+                                    eventos = objetos[0].get("eventos", [])
+                                    if eventos:
+                                        primeiro_ev = eventos[0]
+                                        desc = primeiro_ev.get("descricao", "")
+                                        cidade = primeiro_ev.get("unidade", {}).get("endereco", {}).get("cidade", "")
+                                        uf = primeiro_ev.get("unidade", {}).get("endereco", {}).get("uf", "")
+                                        loc_str = f" ({cidade}/{uf})" if cidade and uf else ""
+                                        
+                                        status_correios = f"{desc}{loc_str}"
+
+                                        for ev in eventos:
+                                            d_desc = ev.get("descricao", "")
+                                            d_dt = ev.get("dtCriacao", "").replace("T", " ")[:16]
+                                            d_cid = ev.get("unidade", {}).get("endereco", {}).get("cidade", "")
+                                            d_uf = ev.get("unidade", {}).get("endereco", {}).get("uf", "")
+                                            d_loc = f" [{d_cid}/{d_uf}]" if d_cid else ""
+                                            
+                                            dest_un = ev.get("unidadeDestino", {}).get("nome", "")
+                                            dest_txt = f" ➔ Destino: {dest_un}" if dest_un else ""
+
+                                            historico_correios.append(f"<b>{d_dt}</b>: {d_desc}{dest_txt}{d_loc}")
                 except Exception:
                     pass
 
-                # FALLBACK - API ALTERNATIVA GRATUITA (Caso a primeira limite requisicoes)
+                # FALLBACK VIA API SECUNDÁRIA LINKETRACK
                 if not historico_correios:
                     try:
-                        url_api2 = f"https://api.rastreio.ninja/v1/track/{cod_correios}"
-                        res2 = requests.get(url_api2, timeout=5)
-                        if res2.status_code == 200:
-                            dados2 = res2.json()
-                            eventos2 = dados2.get("events", [])
-                            if eventos2:
-                                status_correios = eventos2[0].get("description", "Em Trânsito")
-                                for ev in eventos2:
-                                    dt = ev.get("date", "")
-                                    hr = ev.get("time", "")
-                                    desc = ev.get("description", "")
-                                    loc = ev.get("location", "")
-                                    loc_f = f" [{loc}]" if loc else ""
-                                    historico_correios.append(f"<b>{dt} {hr}</b>: {desc}{loc_f}")
+                        url_fallback = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
+                        res_f = requests.get(url_fallback, timeout=5)
+                        if res_f.status_code == 200:
+                            dados_f = res_f.json()
+                            eventos_f = dados_f.get("eventos", [])
+                            if eventos_f:
+                                st_nome = eventos_f[0].get("status", "")
+                                sub_ev_str = f" - {eventos_f[0].get('subStatus')[0]}" if eventos_f[0].get("subStatus") else ""
+                                status_correios = f"{st_nome}{sub_ev_str}"
+
+                                for ev in eventos_f:
+                                    d_ev = ev.get("data", "")
+                                    h_ev = ev.get("hora", "")
+                                    s_ev = ev.get("status", "")
+                                    l_ev = ev.get("local", "")
+                                    sub_txt = f" - {ev.get('subStatus')[0]}" if ev.get("subStatus") else ""
+                                    loc_txt = f" [{l_ev}]" if l_ev else ""
+                                    historico_correios.append(f"<b>{d_ev} {h_ev}</b>: {s_ev}{sub_txt}{loc_txt}")
                     except Exception:
                         pass
 
             if not historico_correios:
                 historico_correios = [
-                    f"<b>{cod_correios}:</b> Pedido registrado nos Correios.",
-                    "<b>Aviso:</b> O portal oficial dos Correios exige validação de imagem (Captcha). Clique no botão abaixo para consultar os eventos completos."
+                    f"<b>{cod_correios}:</b> Pedido registrado e despachado nos Correios.",
+                    "<b>Status:</b> Clique no botão abaixo para consultar o portal oficial."
                 ]
 
             html_historico_correios = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_correios])
