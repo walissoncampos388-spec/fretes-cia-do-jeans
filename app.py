@@ -13,7 +13,7 @@ FRENET_CEP_GOIANIA = "74000000"  # CEP de Origem Goiânia - GO (Para Jadlog)
 
 # 1. Configuração de Design da Página
 st.set_page_config(
-    page_title="Cia do Jeans - Calculadora Inteligente",
+    page_title="Unicam modas - Calculadora Inteligente",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -476,7 +476,7 @@ def arrumar_imagem_local(caminho):
         return ""
 
 
-img_base64 = arrumar_imagem_local("logo_ciadojeans.PNG")
+img_base64 = arrumar_imagem_local("Logo_unicammodas.PNG")
 
 # Topo
 st.markdown(
@@ -1021,8 +1021,8 @@ if st.session_state.tela_ativa == "cotacao" and not rastreio_param:
                 )
                 texto_opcoes = "\n".join(opcoes_whatsapp)
                 mensagem_vendedor = (
-                    "Olá! Segue a cotação de frete para o seu pedido da *Cia do"
-                    " Jeans*:\n\n"
+                    "Olá! Segue a cotação de frete para o seu pedido da *Unicam"
+                    " Modas*:\n\n"
                     f"📍 *Destino:*\n{cidade_busca} - {uf_busca}\n\n"
                     f"📦 *Volume estimado:*\n{total_pecas} peças"
                     f" ({peso_total_calculado:.2f} kg)\n\n"
@@ -1166,7 +1166,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             txt_saudacao = f"Olá, *{nome_cliente_rastreio}*!" if nome_cliente_rastreio else "Olá!"
             
             mensagem_rastreio = (
-                f"{txt_saudacao} Seu pedido da *Cia do Jeans* já foi despachado! 🎉\n\n"
+                f"{txt_saudacao} Seu pedido da *Unicam Modas* já foi despachado! 🎉\n\n"
                 f"🚚 *Transportadora:* {transportadora_rastreio}\n"
                 f"📦 *Código de Rastreio:* `{codigo_rastreio}`\n\n"
                 "🔗 *Clique no link abaixo para acompanhar seu envio em tempo real:*\n"
