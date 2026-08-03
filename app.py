@@ -1271,14 +1271,15 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             cod_correios = codigo_rastreio.strip().upper()
             url_correios_site = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod_correios}"
 
-            status_correios = "Objeto Postado"
-            tipo_entrega_correios = "PAC" if cod_correios.startswith("P") or cod_correios.startswith("O") or cod_correios.startswith("Q") else ("SEDEX" if cod_correios.startswith("S") or cod_correios.startswith("A") else "PAC / SEDEX")
+            status_correios = "Aguardando Atualização"
+            tipo_entrega_correios = "PAC" if cod_correios.startswith(("P", "O", "Q")) else ("SEDEX" if cod_correios.startswith(("S", "A")) else "PAC / SEDEX")
             historico_correios = []
 
-            with st.spinner(f"🔍 Buscando rastreio real para {cod_correios}..."):
+            with st.spinner(f"🔍 Buscando rastreio real nos Correios para {cod_correios}..."):
+                # TENTA API 1 (RastreioBot / Linketrack direta v2)
                 try:
-                    url_api = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
-                    res = requests.get(url_api, timeout=6)
+                    url_api1 = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
+                    res = requests.get(url_api1, timeout=5)
                     if res.status_code == 200:
                         dados = res.json()
                         eventos = dados.get("eventos", [])
@@ -1293,9 +1294,9 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                             if primeiro_ev.get("subStatus"):
                                 sub_ev_str = f" - {primeiro_ev.get('subStatus')[0]}"
                                 
-                            status_correios = f"{st_nome}{sub_ev_str} ({st_data} às {st_hora})"
+                            loc_str = f" ({st_local})" if st_local else ""
+                            status_correios = f"{st_nome}{sub_ev_str}{loc_str}"
                             
-                            # Extrai toda a linha do tempo retornada
                             for ev in eventos:
                                 d_ev = ev.get("data", "")
                                 h_ev = ev.get("hora", "")
@@ -1307,10 +1308,30 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 except Exception:
                     pass
 
+                # FALLBACK - API ALTERNATIVA GRATUITA (Caso a primeira limite requisicoes)
+                if not historico_correios:
+                    try:
+                        url_api2 = f"https://api.rastreio.ninja/v1/track/{cod_correios}"
+                        res2 = requests.get(url_api2, timeout=5)
+                        if res2.status_code == 200:
+                            dados2 = res2.json()
+                            eventos2 = dados2.get("events", [])
+                            if eventos2:
+                                status_correios = eventos2[0].get("description", "Em Trânsito")
+                                for ev in eventos2:
+                                    dt = ev.get("date", "")
+                                    hr = ev.get("time", "")
+                                    desc = ev.get("description", "")
+                                    loc = ev.get("location", "")
+                                    loc_f = f" [{loc}]" if loc else ""
+                                    historico_correios.append(f"<b>{dt} {hr}</b>: {desc}{loc_f}")
+                    except Exception:
+                        pass
+
             if not historico_correios:
                 historico_correios = [
-                    f"<b>{cod_correios}:</b> Pedido registrado e postado nos Correios.",
-                    "<b>Status:</b> Acompanhe as movimentações completas no portal oficial."
+                    f"<b>{cod_correios}:</b> Pedido registrado nos Correios.",
+                    "<b>Aviso:</b> O portal oficial dos Correios exige validação de imagem (Captcha). Clique no botão abaixo para consultar os eventos completos."
                 ]
 
             html_historico_correios = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_correios])
