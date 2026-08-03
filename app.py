@@ -1271,84 +1271,167 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             </div>
             """, unsafe_allow_html=True)
 
-        # TRATAMENTO ESPECIAL PARA CORREIOS (LAYOUT SIMPLES E NATIVO)
+        # TRATAMENTO ESPECIAL PARA CORREIOS (COM AUTENTICAÇÃO BASIC CWS + MULTI-FALLBACK)
         elif "correio" in transportadora_rastreio.lower():
             cod_correios = codigo_rastreio.strip().upper()
             url_correios_site = f"https://rastreamento.correios.com.br/app/index.php?codigo={cod_correios}"
 
-            status_correios = "Em Trânsito / Postado"
-            tipo_entrega_correios = "SEDEX" if cod_correios.startswith(("S", "A")) else "PAC"
+            status_correios = "Aguardando Atualização"
+            tipo_entrega_correios = "PAC" if cod_correios.startswith(("P", "O", "Q")) else ("SEDEX" if cod_correios.startswith(("S", "A")) else "PAC / SEDEX")
             historico_correios = []
 
-            with st.spinner(f"Consultando {cod_correios}..."):
-                # Tentativa 1: API Linketrack
+            with st.spinner(f"🔍 Consultando rastreio real nos Correios para {cod_correios}..."):
+                # METODO 1: Tenta a API Oficial CWS dos Correios (com Basic Auth)
                 try:
-                    url_1 = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
-                    res1 = requests.get(url_1, timeout=4)
-                    if res1.status_code == 200:
-                        dados = res1.json()
-                        eventos = dados.get("eventos", [])
-                        if eventos:
-                            ev0 = eventos[0]
-                            st_nome = ev0.get("status", "")
-                            st_loc = ev0.get("local", "")
-                            sub = f" - {ev0.get('subStatus')[0]}" if ev0.get("subStatus") else ""
-                            loc_txt = f" ({st_loc})" if st_loc else ""
-                            status_correios = f"{st_nome}{sub}{loc_txt}"
+                    if CWS_USER and CWS_ACCESS_KEY:
+                        url_token = "https://api.correios.com.br/v1/autentica/cartaopostagem"
+                        auth_body = {"numero": CWS_CARTAO} if CWS_CARTAO else {}
+                        
+                        # Gera o cabeçalho Basic Auth com Usuario e Access Key
+                        credentials = f"{CWS_USER}:{CWS_ACCESS_KEY}"
+                        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+                        
+                        headers_auth = {
+                            "Content-Type": "application/json",
+                            "Authorization": f"Basic {encoded_credentials}"
+                        }
 
-                            for ev in eventos:
-                                d = ev.get("data", "")
-                                h = ev.get("hora", "")
-                                s = ev.get("status", "")
-                                l = ev.get("local", "")
-                                sub_t = f" - {ev.get('subStatus')[0]}" if ev.get("subStatus") else ""
-                                loc_t = f" [{l}]" if l else ""
-                                historico_correios.append(f"**{d} {h}**: {s}{sub_t}{loc_t}")
+                        res_auth = requests.post(url_token, json=auth_body, headers=headers_auth, timeout=5)
+                        
+                        if res_auth.status_code in [200, 201]:
+                            token_bearer = res_auth.json().get("token")
+                            if token_bearer:
+                                url_rastreio = f"https://api.correios.com.br/srorasteio/v1/objetos/{cod_correios}?resultado=T"
+                                headers_rastreio = {
+                                    "Authorization": f"Bearer {token_bearer}",
+                                    "Accept": "application/json"
+                                }
+                                res_obj = requests.get(url_rastreio, headers=headers_rastreio, timeout=5)
+                                if res_obj.status_code == 200:
+                                    dados_obj = res_obj.json()
+                                    objetos = dados_obj.get("objetos", [])
+                                    if objetos:
+                                        eventos = objetos[0].get("eventos", [])
+                                        if eventos:
+                                            primeiro_ev = eventos[0]
+                                            desc = primeiro_ev.get("descricao", "")
+                                            cidade = primeiro_ev.get("unidade", {}).get("endereco", {}).get("cidade", "")
+                                            uf = primeiro_ev.get("unidade", {}).get("endereco", {}).get("uf", "")
+                                            loc_str = f" ({cidade}/{uf})" if cidade and uf else ""
+                                            status_correios = f"{desc}{loc_str}"
+
+                                            for ev in eventos:
+                                                d_desc = ev.get("descricao", "")
+                                                d_dt = ev.get("dtCriacao", "").replace("T", " ")[:16]
+                                                d_cid = ev.get("unidade", {}).get("endereco", {}).get("cidade", "")
+                                                d_uf = ev.get("unidade", {}).get("endereco", {}).get("uf", "")
+                                                d_loc = f" [{d_cid}/{d_uf}]" if d_cid else ""
+                                                dest_un = ev.get("unidadeDestino", {}).get("nome", "")
+                                                dest_txt = f" ➔ Destino: {dest_un}" if dest_un else ""
+                                                historico_correios.append(f"<b>{d_dt}</b>: {d_desc}{dest_txt}{d_loc}")
                 except Exception:
                     pass
 
-                # Tentativa 2: API Rastreio Ninja (Fallback)
+                # METODO 2: Fallback Gratuito Rápido via Linketrack (v2 Direta)
                 if not historico_correios:
                     try:
-                        url_2 = f"https://api.rastreio.ninja/v1/track/{cod_correios}"
-                        res2 = requests.get(url_2, timeout=4)
-                        if res2.status_code == 200:
-                            dados2 = res2.json()
-                            eventos2 = dados2.get("events", [])
-                            if eventos2:
-                                status_correios = eventos2[0].get("description", status_correios)
-                                for ev in eventos2:
+                        url_fallback = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={cod_correios}"
+                        res_f = requests.get(url_fallback, timeout=5)
+                        if res_f.status_code == 200:
+                            dados_f = res_f.json()
+                            eventos_f = dados_f.get("eventos", [])
+                            if eventos_f:
+                                st_nome = eventos_f[0].get("status", "")
+                                st_local = eventos_f[0].get("local", "")
+                                sub_ev_str = f" - {eventos_f[0].get('subStatus')[0]}" if eventos_f[0].get("subStatus") else ""
+                                loc_txt_top = f" ({st_local})" if st_local else ""
+                                status_correios = f"{st_nome}{sub_ev_str}{loc_txt_top}"
+
+                                for ev in eventos_f:
+                                    d_ev = ev.get("data", "")
+                                    h_ev = ev.get("hora", "")
+                                    s_ev = ev.get("status", "")
+                                    l_ev = ev.get("local", "")
+                                    sub_txt = f" - {ev.get('subStatus')[0]}" if ev.get("subStatus") else ""
+                                    loc_txt = f" [{l_ev}]" if l_ev else ""
+                                    historico_correios.append(f"<b>{d_ev} {h_ev}</b>: {s_ev}{sub_txt}{loc_txt}")
+                    except Exception:
+                        pass
+
+                # METODO 3: Fallback de Segurança via Rastreio Ninja
+                if not historico_correios:
+                    try:
+                        url_ninja = f"https://api.rastreio.ninja/v1/track/{cod_correios}"
+                        res_n = requests.get(url_ninja, timeout=5)
+                        if res_n.status_code == 200:
+                            dados_n = res_n.json()
+                            eventos_n = dados_n.get("events", [])
+                            if eventos_n:
+                                status_correios = eventos_n[0].get("description", "Em Trânsito")
+                                for ev in eventos_n:
                                     dt = ev.get("date", "")
                                     hr = ev.get("time", "")
                                     desc = ev.get("description", "")
                                     loc = ev.get("location", "")
                                     loc_f = f" [{loc}]" if loc else ""
-                                    historico_correios.append(f"**{dt} {hr}**: {desc}{loc_f}")
+                                    historico_correios.append(f"<b>{dt} {hr}</b>: {desc}{loc_f}")
                     except Exception:
                         pass
 
-            # EXIBIÇÃO SIMPLES E DIRETA (SEM HTML / LAYOUTS PESADOS)
-            col_info1, col_info2 = st.columns(2)
-            with col_info1:
-                st.metric(label="Status Atual", value=status_correios)
-            with col_info2:
-                st.metric(label="Tipo de Entrega", value=tipo_entrega_correios)
+            # Exibição Final do Histórico Encontrado
+            if not historico_correios:
+                status_correios = "Objeto Postado"
+                historico_correios = [
+                    f"<b>{cod_correios}:</b> Pedido registrado e postado nos Correios.",
+                    "<b>Aviso:</b> Para conferir o histórico com todas as movimentações de entrega, clique no botão do portal oficial abaixo."
+                ]
 
-            st.markdown("---")
-            st.markdown("### 📍 Histórico de Movimentações")
+            html_historico_correios = "".join([f'<li style="margin-bottom: 8px; color: #334155;">{h}</li>' for h in historico_correios])
 
-            if historico_correios:
-                for item in historico_correios:
-                    st.write(f"- {item}")
-            else:
-                st.info(f"O objeto **{cod_correios}** foi postado nos Correios. Como o sistema oficial dos Correios frequentemente exige verificação de segurança (Captcha), clique no botão abaixo para ver o rastreio atualizado diretamente na página oficial.")
+            st.html(f"""
+            <div style="background: #ffffff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 16px;">
+                    <div>
+                        <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb; font-weight: 700;">STATUS DO ENVIO</span>
+                        <h4 style="margin: 2px 0 0 0; color: #0f172a; font-size: 18px;">📦 Correios</h4>
+                    </div>
+                    <div style="background-color: #eff6ff; padding: 6px 14px; border-radius: 8px; border: 1px solid #dbeafe;">
+                        <span style="font-size: 13px; color: #1e40af; font-weight: 600;">COD: {cod_correios}</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Status Atual</span>
+                        <strong style="font-size: 14px; color: #1e3a8a;">{status_correios}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #f1f5f9;">
+                        <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Tipo de Entrega</span>
+                        <strong style="font-size: 15px; color: #0f172a;">{tipo_entrega_correios}</strong>
+                    </div>
+                </div>
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.link_button(
-                label="🔗 ABRIR RASTREIO NO SITE OFICIAL DOS CORREIOS",
-                url=url_correios_site,
-                use_container_width=True,
-                type="primary"
+                <div style="background: #f1f5f9; padding: 16px; border-radius: 12px; border-left: 4px solid #2563eb;">
+                    <strong style="font-size: 14px; color: #0f172a; display: block; margin-bottom: 10px;">📍 Histórico de Movimentações:</strong>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 13px;">
+                        {html_historico_correios}
+                    </ul>
+                </div>
+            </div>
+            """)
+
+            st.markdown(f"""
+            <div style="text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 15px;">
+                <p style="color: #1e3a8a; font-weight: 600; font-size: 15px; margin-bottom: 12px;">
+                    👇 Clique no botão abaixo para conferir a movimentação no portal dos Correios:
+                </p>
+                <a href="{url_correios_site}" target="_blank" style="text-decoration: none;">
+                    <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; display: inline-block; padding: 16px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">
+                        🔗 CONSULTAR COMPLETO NO PORTAL CORREIOS
+                    </div>
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
             )
         # TRATAMENTO ESPECIAL PARA JADLOG
         elif "jadlog" in transportadora_rastreio.lower():
