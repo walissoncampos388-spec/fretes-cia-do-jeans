@@ -1,5 +1,6 @@
 import base64
 import math
+import os
 import re
 import urllib.parse
 import pandas as pd
@@ -468,29 +469,47 @@ def carregar_e_limpar_dados():
 df_fretes_fixos = carregar_e_limpar_dados()
 
 
-def arrumar_imagem_local(caminho):
-    try:
-        with open(caminho, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode()
-    except Exception:
-        return ""
+def buscar_e_carregar_logo():
+    possiveis_nomes = [
+        "Logo_unicammodas.PNG",
+        "Logo_unicammodas.png",
+        "Logo_unicammodas.jpg",
+        "Logo_unicammodas.jpeg",
+        "logo_unicammodas.png",
+        "logo_unicammodas.PNG",
+        "logo.png",
+        "logo.PNG",
+        "assets/Logo_unicammodas.PNG",
+        "assets/Logo_unicammodas.png",
+    ]
+
+    for caminho in possiveis_nomes:
+        if os.path.exists(caminho):
+            try:
+                with open(caminho, "rb") as image_file:
+                    return base64.b64encode(image_file.read()).decode()
+            except Exception:
+                pass
+    return ""
 
 
-img_base64 = arrumar_imagem_local("Logo_unicammodas.PNG")
+img_base64 = buscar_e_carregar_logo()
 
-# Topo
-header_html = f"""
-    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 12px 16px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
-"""
+# Topo da Aplicação
 if img_base64:
-    header_html += f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">'
-else:
-    header_html += '<h1 style="color: white; margin: 10px 0;">UNICAM MODAS</h1>'
-
-header_html += """
-        <p style='color: #93c5fd; font-weight: 600; margin-top: -6px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+    header_html = f"""
+    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 16px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+        <img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">
+        <p style='color: #93c5fd; font-weight: 600; margin-top: 8px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
     </div>
-"""
+    """
+else:
+    header_html = """
+    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+        <h1 style='color: #ffffff; margin: 0; font-size: 2.2rem; font-weight: 800;'>UNICAM MODAS</h1>
+        <p style='color: #93c5fd; font-weight: 600; margin-top: 4px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+    </div>
+    """
 
 st.markdown(header_html, unsafe_allow_html=True)
 
