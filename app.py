@@ -1520,7 +1520,6 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 awb_codigo = digitos_apenas if digitos_apenas else codigo_rastreio
 
             url_azul_site = f"https://www.azullogistica.com.br/Rastreio/Rastrear?awb={awb_codigo}"
-            url_api_hub = f"https://api.linketrack.com/track/json?user=teste&token=1fe10a01fe10a01fe10a01fe10a0&codigo={awb_codigo}"
 
             status_azul = "Objeto em Trânsito"
             previsao_azul = "Consultar no Portal"
@@ -1537,34 +1536,24 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
                 return texto.strip()
 
             with st.spinner(f"🔍 Consultando AWB {awb_codigo} na Azul Cargo..."):
+                # Busca real via scraping de eventos
                 try:
-                    res = requests.get(url_api_hub, timeout=5)
-                    if res.status_code == 200:
-                        dados = res.json()
-                        eventos = dados.get("eventos", [])
-                        
-                        # Validação rigorosa: só aceita eventos do ano atual para evitar cache antigo
-                        for ev in eventos:
-                            data_ev = ev.get("data", "")
-                            hora_ev = ev.get("hora", "")
-                            st_ev = ev.get("status", "")
-                            loc_ev = ev.get("local", "")
-                            
-                            if "2026" in data_ev or "2025" in data_ev:
-                                txt_loc = f" [{loc_ev}]" if loc_ev else ""
-                                historico_azul.append(f"<b>{data_ev} {hora_ev}</b>: {formatar_texto_azul(st_ev)}{txt_loc}")
-                        
+                    resp_alt = requests.get(f"https://rastreadordeencomendas.com/result.php?idcod={codigo_rastreio}", headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+                    if resp_alt.status_code == 200 and "<tr" in resp_alt.text:
+                        linhas_tr = re.findall(r'<tr[^>]*>(.*?)</tr>', resp_alt.text, re.DOTALL)
+                        for tr in linhas_tr:
+                            colunas = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
+                            if len(colunas) >= 2:
+                                txt_data = re.sub(r'<[^>]+>', '', colunas[0]).strip()
+                                txt_desc = re.sub(r'<[^>]+>', '', colunas[1]).strip()
+                                if txt_data and txt_desc:
+                                    historico_azul.append(f"<b>{txt_data}</b>: {formatar_texto_azul(txt_desc)}")
                         if historico_azul:
-                            primeiro_ev = eventos[0]
-                            st_nome = primeiro_ev.get("status", "")
-                            st_data = primeiro_ev.get("data", "")
-                            status_azul = f"{formatar_texto_azul(st_nome)} ({st_data})"
-                            if primeiro_ev.get("local"):
-                                origem_destino_azul = f"Local Atual: {primeiro_ev.get('local')}"
+                            status_azul = historico_azul[0].replace('<b>', '').replace('</b>', '')
                 except Exception:
                     pass
 
-            # Se não houver histórico real e atualizado, exibe mensagem limpa sem inventar dados
+            # Se não houver histórico real retornado, exibe mensagem limpa orientando consulta
             if not historico_azul:
                 status_azul = "Em Trânsito / Processamento"
                 historico_azul = [
