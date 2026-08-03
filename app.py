@@ -495,23 +495,29 @@ def buscar_e_carregar_logo():
 
 img_base64 = buscar_e_carregar_logo()
 
-# Topo da Aplicação
-if img_base64:
-    header_html = f"""
-    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 16px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
-        <img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">
-        <p style='color: #93c5fd; font-weight: 600; margin-top: 8px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
-    </div>
-    """
-else:
-    header_html = """
-    <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
-        <h1 style='color: #ffffff; margin: 0; font-size: 2.2rem; font-weight: 800;'>UNICAM MODAS</h1>
-        <p style='color: #93c5fd; font-weight: 600; margin-top: 4px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
-    </div>
-    """
+# Topo da Aplicação (Carregamento Direto e Seguro da Logo)
+import os
 
-st.markdown(header_html, unsafe_allow_html=True)
+if os.path.exists("Logo_unicammodas.PNG"):
+    st.image("Logo_unicammodas.PNG", use_container_width=True)
+    st.markdown(
+        """
+        <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 8px; border-radius: 12px; text-align: center; margin-bottom: 24px; margin-top: -10px;'>
+            <p style='color: #93c5fd; font-weight: 600; margin: 0; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        """
+        <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
+            <h1 style='color: #ffffff; margin: 0; font-size: 2.2rem; font-weight: 800;'>UNICAM MODAS</h1>
+            <p style='color: #93c5fd; font-weight: 600; margin-top: 4px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # SE FOR ACESSO DE CLIENTE DIRETO VIA LINK, OCULTA OS BOTOES DE ALTERNAR TELA
 if not rastreio_param:
