@@ -13,7 +13,7 @@ FRENET_CEP_GOIANIA = "74000000"  # CEP de Origem Goiânia - GO (Para Jadlog)
 
 # 1. Configuração de Design da Página
 st.set_page_config(
-    page_title="Unicam modas - Calculadora Inteligente",
+    page_title="Unicam Modas - Calculadora Inteligente",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -479,15 +479,20 @@ def arrumar_imagem_local(caminho):
 img_base64 = arrumar_imagem_local("Logo_unicammodas.PNG")
 
 # Topo
-st.markdown(
-    f"""
+header_html = f"""
     <div style='background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1e40af 100%); padding: 12px 16px; border-radius: 16px; text-align: center; margin-bottom: 24px;'>
-        <img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">
+"""
+if img_base64:
+    header_html += f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin: 0 auto; width: 900px; max-width: 98%; height: auto; max-height: 280px; object-fit: contain;">'
+else:
+    header_html += '<h1 style="color: white; margin: 10px 0;">UNICAM MODAS</h1>'
+
+header_html += """
         <p style='color: #93c5fd; font-weight: 600; margin-top: -6px; font-size: 0.95rem; text-transform: uppercase;'>⚡ Logística & Cotação Inteligente</p>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+"""
+
+st.markdown(header_html, unsafe_allow_html=True)
 
 # SE FOR ACESSO DE CLIENTE DIRETO VIA LINK, OCULTA OS BOTOES DE ALTERNAR TELA
 if not rastreio_param:
@@ -1086,7 +1091,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
         st.markdown(f"""
         <div class="bloco-etapa">
             <h3 style="color: #1e3a8a; margin-top: 0;">📦 {txt_boas_vindas_cli}Agradecemos a Preferência 💙</h3>
-            <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega <b>Cia do Jeans</b>.</p>
+            <p style="color: #64748b; margin-bottom: 0;">Acompanhe o status da sua entrega <b>Unicam Modas</b>.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1159,7 +1164,7 @@ elif st.session_state.tela_ativa == "rastreio" or rastreio_param:
             if host_atual:
                 base_url = f"https://{host_atual}"
             else:
-                base_url = "https://appteste-ciadojeans.streamlit.app"
+                base_url = "https://unicammodas.streamlit.app"
 
             link_rastreio_personalizado = f"{base_url}/?rastreio={codigo_rastreio}&transp={urllib.parse.quote(transportadora_rastreio)}&cliente={urllib.parse.quote(nome_cliente_rastreio)}"
 
